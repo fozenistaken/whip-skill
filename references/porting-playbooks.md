@@ -223,6 +223,11 @@ Do not edit the user's files when they only asked how a port would work.
   - After `BankWithdraw` waits, check `IsSessionCurrent` before paying the notes; otherwise put the money back
     with `BankSystemDeposit`.
   - The camera mode takes the screen with `SetScreenOpen(true, 'atm')` in place of a HUD toggle event.
+  - An `AddAction` with `at = { model = … }` puts the prompt at the prop's origin: for an ATM that is its base,
+    inside the mesh (seen in game). Give `offset` (x across, y out of the face, z up), `heading`, and a
+    `perModel` entry per model. For ATMs, reuse whip_core's `Config.AtmBadgeOffset` figures, for example
+    `prop_atm_01 = { offset = vector3(-0.05, -0.20, 1.10), heading = 180.0 }`. `/actionplace <id>` aims one in
+    game.
   - Map props spawned for show (cash, card) are local: `CreateObject(..., false, false, false)`.
   - WHIP's ATMs have no server-known positions, so `near` cannot check that the player is at an ATM. Rate
     limits, the PIN session and the bank's own rules carry the security instead.
