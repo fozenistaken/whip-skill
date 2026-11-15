@@ -24,7 +24,10 @@ Use this file when something in the skill does not match what a server does: a r
 
 ## Repositories, pinned to the commits this skill was built from
 
-Snapshot of 2026-11-14/15. `main` may be newer: compare before trusting a detail.
+Snapshot of 2026-11-14/15. `main` may be newer: compare before trusting a detail. Line citations use the
+pinned commits below; `export-index.md` and `whip-names.json` were regenerated from whip_core
+[`0d74872`](https://github.com/WHIPFX/whip_core/tree/0d74872e189370ce818bb076d2260bdab9d62145) (1.0.1), which
+adds `OpenCharacterEditor`.
 
 | Repository | What | Pinned commit |
 |---|---|---|

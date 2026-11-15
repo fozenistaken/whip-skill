@@ -1065,6 +1065,9 @@
    "client",
    "server"
   ],
+  "OpenCharacterEditor": [
+   "server"
+  ],
   "OpenComposer": [
    "client"
   ],
@@ -1813,6 +1816,7 @@
   "whip_core:client:npcGateGone",
   "whip_core:client:npcGates",
   "whip_core:client:objective",
+  "whip_core:client:openCharacterEditor",
   "whip_core:client:openContainer",
   "whip_core:client:openContainerDenied",
   "whip_core:client:openDirector",

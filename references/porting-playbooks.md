@@ -257,9 +257,13 @@ Do not edit the user's files when they only asked how a port would work.
 
 ## Playbook: clothing, barber, tattoo shops
 - **WHIP owns:** the appearance editor (character creator), saved outfits and tattoos.
-- **Gap:** no export to open the clothing editor for a shop was found in `types/*.lua`. Check the current
-  source before promising a clothing-store port. Otherwise keep the store and save looks only with what WHIP
-  exposes (`SanitizeAppearance` validates an appearance table).
+- **Rebuild:** the shop is a prompt (`AddAction`) and a price; take the money first (`ChargePlayer`), then
+  `OpenCharacterEditor(source)` (whip_core 1.0.1+, server). It opens WHIP's own editor on the player, as
+  `/charedit` does: Save keeps the look, Cancel restores the old one. Refund if it returns `false, why`.
+- **Limits** (`server/events_misc.lua` `OpenCharacterEditorFor`): it is the full editor (face and hair too, no
+  clothes-only or barber-only mode); no event tells the resource whether the player saved or cancelled, so a
+  cancel after paying is not refunded; refused when offline, still in the creator, or down. `SanitizeAppearance`
+  validates an appearance table if the shop stores its own looks.
 
 ## Playbook: licences, IDs, documents
 - **Rebuild:**
@@ -362,7 +366,8 @@ The scanner's port pass found 88 points. The largest groups were 27 callbacks, 1
 1. **Floating logins.** WHIP saves the live ped position at logout, so a player in a shell is saved in the air.
    Set a player flag on entry; on `whip_core:player:loaded`, restore them to the door or rebuild the shell.
 2. **Spawn picker.** It lists WHIP Properties only; no export was found to add shell homes.
-3. **Wardrobe.** No export opens WHIP's outfit menu for a resource. The wardrobe furniture needs a different design.
+3. **Wardrobe.** No export opens WHIP's saved-outfit menu. Since whip_core 1.0.1 `OpenCharacterEditor(source)` opens the
+   full character editor (outfits included), so the wardrobe furniture can call that; there is no outfits-only view.
 4. **No overdraft.** The "may go negative" rent policy is impossible: bank balances can't go below 0.
 5. **Routing buckets.** WHIP uses `1000 + source` (character select) and `100000 + source` (Director isolation).
    Keep the house range clear of both. Drop held props before a bucket move.

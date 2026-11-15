@@ -197,6 +197,9 @@ Full teardown and back to character select (does not drop). Returns `true`, or `
 ### SanitizeAppearance(appearance) — SERVER
 Runs the creator's validator: whitelist-copy, clamp indexes, reject structural errors. Optional `tattoos` (`{ { collection, overlay }, ... }`, max 40) and `hairFade` (one `{ collection, overlay }`) kept only if `shared/tattoo_list.lua` / `shared/hair_fades.lua` list them for that body (once each, list spelling); others dropped silently. Models: `mp_m_freemode_01`, `mp_f_freemode_01`. Returns `true, cleaned` or `false, why`.
 
+### OpenCharacterEditor(who) — SERVER (whip_core 1.0.1+)
+Opens WHIP's character editor on the player's own character, as `/charedit` does: Save keeps the new look, Cancel puts the old one back. `who` = server id or `{ charId = n }` (online). Returns `true` or `false, why`: `'That character is not online'`, `'They are still making their character'`, `'They are down'` (plus `WhoIs` errors). The player's game also refuses silently while the editor is already open, so `true` means "sent", not "opened". Full editor only (face, hair, clothes, tattoos); no save/cancel event comes back. Charge first, then open. Source: `server/events_misc.lua` `OpenCharacterEditorFor`, `client/appearance.lua` `OpenCharacterEditor`.
+
 ## Client exports: local player, body, walk, emotes, voice
 
 ### IsReady() — CLIENT

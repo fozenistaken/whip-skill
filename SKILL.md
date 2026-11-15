@@ -100,5 +100,5 @@ machine; `scripts/install_whip.py` installs without txAdmin, or for txAdmin's "E
 All are in `references/`. Each starts with a Contents list; grep for the section instead of reading the whole
 file.
 
-Built against whip_core `d12235f` (2026-11-14). WHIP changes fast: when the code disagrees, the code wins.
+Built against whip_core `d12235f` (2026-11-14); export and name lists from `0d74872` (1.0.1, 2026-11-15). WHIP changes fast: when the code disagrees, the code wins.
 Regenerate the name lists with `scripts/export_index.py` and `scripts/whip_names.py`.
