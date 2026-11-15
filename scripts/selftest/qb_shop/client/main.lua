@@ -1,0 +1,6 @@
+exports['qb-target']:AddBoxZone('shop', vector3(0,0,0), 1, 1, {}, { options = { { event = 'x', job = 'police' } }, distance = 2.0 })
+QBCore.Functions.Progressbar('buy', 'Buying', 4000, false, true, {}, {}, {}, {}, function()
+    TriggerServerEvent('qb_shop:buy', 'sandwich', 5, 1)
+end)
+lib.notify({ title = 'hi' })
+local input = lib.inputDialog('Amount', { 'n' })

@@ -1,0 +1,5 @@
+fx_version 'cerulean'
+game 'gta5'
+shared_script '@qbx_core/modules/lib.lua'
+server_script 'server/main.lua'
+client_script 'client/main.lua'

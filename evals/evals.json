@@ -1,0 +1,135 @@
+{
+  "skill_name": "fivem-whip",
+  "notes": "Prompts a real user would type. WHIP was released in November 2026, so without the skill a model invents QBCore-style calls. Run with and without the skill and compare against the assertions.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "port-qb-shop",
+      "prompt": "convert this qbcore shop to whip\n\nlocal QBCore = exports['qb-core']:GetCoreObject()\nRegisterNetEvent('myshop:buy', function(item, price)\n    local Player = QBCore.Functions.GetPlayer(source)\n    if Player.Functions.RemoveMoney('cash', price) then\n        Player.Functions.AddItem(item, 1)\n        TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items[item], 'add')\n    end\nend)",
+      "expected_output": "A WHIP rewrite: manifest with dependency 'whip_core' and @whip_core/lib/satellite.lua; Whip.register block; SecureEvent with rateLimit and near; the client sends an id at most, price and item looked up from server Config; ChargePlayer receipt checked; AddItem result checked and RefundPlayer on failure; return false, why; no ItemBox event.",
+      "assertions": [
+        "Uses SecureEvent, not RegisterNetEvent",
+        "Declares inside Whip.register",
+        "Does not accept price from the client",
+        "Calls ChargePlayer and keeps the receipt; calls RefundPlayer if AddItem fails",
+        "Returns false, why to refuse",
+        "Removes the ItemBox client event",
+        "Adds dependency 'whip_core' and the satellite to fxmanifest"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "port-qbox-usable-item",
+      "prompt": "i have a qbox script that makes a bandage usable with exports.qbx_core:CreateUseableItem and a lib.progressCircle on the client then triggers a heal event. how do i do this on whip",
+      "expected_output": "RegisterUseHandler with a timed-use table (label, duration, anim, prop, disable, onComplete) inside Whip.register on the server, so WHIP times the bar server-side and consumes the item; the heal happens in onComplete through a WHIP stat/health export; no client progress bar and no client-triggered heal event.",
+      "assertions": [
+        "Uses RegisterUseHandler with a table (timed use), not a client progress bar",
+        "Explains that a client bar is the player's word and the server must time it",
+        "Puts the registration in Whip.register",
+        "Heals in onComplete on the server, without a client-triggered heal event"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "port-esx-job-target",
+      "prompt": "porting my esx mechanic job to whip. it uses ox_target addBoxZone with groups = 'mechanic', esx_society for the boss money and xPlayer.job.grade_name checks. whats the whip way",
+      "expected_output": "EnsureJob with roles and levels; AddAction with options and require = { job = 'mechanic', onDuty = true } replacing ox_target; server re-checks with IsPlayerClockedOn / HasJobPermission in a SecureEvent; business bank account belongs to the job (no esx_society); GetPlayerJob is on-duty only, GetPlayerRole for employment.",
+      "assertions": [
+        "Replaces ox_target with AddAction and require",
+        "States require is only a courtesy and the server re-checks",
+        "Uses EnsureJob in Whip.register",
+        "Distinguishes GetPlayerJob (on duty) from GetPlayerRole",
+        "Uses the job's business bank account instead of esx_society"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "build-delivery-job",
+      "prompt": "make me a whip resource: a trucking job. player rents a truck for a $500 deposit, gets cargo in the trailer, drives to 3 random drops, gets paid per drop, deposit back when they return the truck",
+      "expected_output": "Follows whip_delivery_example's pattern: EnsureJob, SecureEvents with near (a function for the current drop), ChargePlayer method bank for the deposit with receipt, SpawnTempVehicle with forSource and despawnAfter under 30 minutes, StoreGive into the vehicle's trunk store, ShowBlip with route, server Progress at the door, IsSessionCurrent after waits, PayPlayer per drop, RefundPlayer within 30 minutes or PayPlayer after, cleanup on logout and resource stop.",
+      "assertions": [
+        "Uses SpawnTempVehicle rather than CreateVehicle plus key/fuel scripts",
+        "Keeps the deposit receipt and refunds it (or PayPlayer after 30 minutes)",
+        "Uses near on the drop event so the pay event cannot be fired from anywhere",
+        "Checks IsSessionCurrent after Progress before giving or paying",
+        "Uses ShowBlip with route = true from the server",
+        "Puts cargo in the truck with StoreGive to a vehicle store"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "review-whip-resource",
+      "prompt": "review my whip script, items keep disappearing after the server restarts whip_core\n\nCreateThread(function()\n    Wait(2000)\n    exports.whip_core:RegisterItem('lockpick', { name = 'Lockpick', weight = 0.1 })\nend)",
+      "expected_output": "Explains the one rule: whip_core forgets declarations on restart, a wait-then-register thread registers once; move into Whip.register via Whip.core; prefix the item key with the resource name; add dependency and satellite to the manifest.",
+      "assertions": [
+        "Identifies that the thread registers only once and a whip_core restart strips it",
+        "Moves the declaration into Whip.register",
+        "Suggests prefixing the item key with the resource name",
+        "Mentions the manifest lines (dependency 'whip_core', satellite)"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "export-returns",
+      "prompt": "in whip what does AddItem return and how should my export return errors? mine returns nil, 'not found'",
+      "expected_output": "AddItem returns 'inventory' or 'ground', or false, why. Exports never return nil, why because FiveM cuts export returns at the first nil: return false, why. Also: assign export results to a local before nesting; functions through exports are callable references, not type 'function'.",
+      "assertions": [
+        "AddItem returns 'inventory' or 'ground' on success",
+        "Failure is false plus a reason",
+        "Explains that nil cuts off the second return value across an export",
+        "Recommends returning false, why"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "settings-page",
+      "prompt": "how do I let server owners change my whip resource's prices in game instead of editing config.lua",
+      "expected_output": "Whip.configPage in a shared file at file scope with settings entries whose key is a path into Config (types int/number/bool/string/enum/vec3/vec4/list/records/map/record, min/max/step/unit/help/apply/sides), Whip.onConfigChanged for live reaction, sides = 'server' for secrets.",
+      "assertions": [
+        "Uses Whip.configPage",
+        "Each setting key is a path into Config and config.lua holds the default",
+        "Mentions Whip.onConfigChanged",
+        "Uses only setting types that exist (int, number, bool, string, enum, vec3, vec4, list, records, map, record)"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "server-install",
+      "prompt": "how do i install whip on my server, i already have a qbcore server running",
+      "expected_output": "WHIP installs as a new server from its txAdmin recipe (Remote URL Template, legacy or enhanced yaml), cannot be added to an existing server, needs OneSync, MariaDB 10.2.3+/MySQL 8.0.16+, oxmysql before WHIP, voice ports UDP 7882-7893 and TCP 7881, add_unsafe_child_process_permission whip_voice; no SQL import; whipsetup report; /w and /whip need whip.devtools; do not run beside qb-core.",
+      "assertions": [
+        "Says WHIP is installed as a new server via the txAdmin recipe, not added to the QBCore server",
+        "Names the recipe URLs or the Remote URL Template step",
+        "Mentions oxmysql must start before WHIP",
+        "Mentions the voice ports or the unsafe child process permission",
+        "Says not to run QBCore beside WHIP"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "port-police-job",
+      "prompt": "how would i port qb-policejob to whip? it has cuffs, escort, jail, fines, armory, evidence locker, impound and dispatch alerts",
+      "expected_output": "Classifies features: escort is built into WHIP (delete); armory becomes a job shop (EnsureShop with job); evidence locker becomes an EnsureContainer with a job requirement; impound uses WHIP garages and impound state; WHIP lacks cuffs, jail, MDT and dispatch, so those are rebuilt (cuffs: SecureEvent with a 'player' param plus a Sentinel-protected state bag; jail: zone plus player flag; dispatch: ShowBlip to { job = 'police', onDuty = true } plus NotifyPlayer); fines go through ChargePlayer then BankSystemDeposit into the police business account; LogActivity for arrests; presents the plan before writing code.",
+      "assertions": [
+        "Says escorting is already built into WHIP and deletes qb's escort",
+        "Uses a job audience { job = 'police', onDuty = true } for dispatch blips",
+        "Routes fine money into the police job's business account",
+        "Rebuilds cuffs server-side, with a protected state rather than a client-written state bag",
+        "Presents a split (WHIP owns / stays yours) before code"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "port-plan-no-edits",
+      "prompt": "dont change any files. if you convert C:/scripts/my-housing (qbcore, shells, rent, ox_target, ox_inventory) to whip how would it work?",
+      "expected_output": "Reads the resource and runs whip_scan.py --plan without editing anything; gives the verdict and split (WHIP Properties own MLO homes, keys, furnishing, stashes; shells, rent and realtor workflow stay as a satellite on WHIP primitives); a delete list; an area table mapping to WHIP surfaces (SecureCallback, charId and EnsureTable, job roles, configPage, dev page, ChargePlayer receipts, offline rent through bank system withdrawals, EnsureContainer, AddAction prompts, EnsureDoors, ShowBlip, SetScreenOpen, LogActivity, phone module); traps (position saved in the shell at logout, no-overdraft bank, spawn picker, buckets); size and order.",
+      "assertions": [
+        "Does not modify any file in the resource",
+        "Gives a split between WHIP Properties and what stays in the resource",
+        "Maps money to ChargePlayer receipts and offline rent to bank system withdrawals",
+        "Names the logout-in-shell position trap",
+        "Mentions the bank's no-overdraft constraint if the script allows negative balances"
+      ]
+    }
+  ]
+}
