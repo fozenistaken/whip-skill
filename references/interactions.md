@@ -352,6 +352,12 @@ Puts props in a player's hand for everyone (server makes the objects, the owning
 
 Returns: `true`, or `false, why` (`'no such player'`, `'props is a list of { model, bone, offset, rot }'`, ...). Rate: at most one new set per player per second (`SET_GAP_MS = 1000`); faster calls wait and only the newest is made, intermediate ones forgotten. The hand holds one set shared with WHIP's own (`'emote'`, `'bar'`, `'give'`, `'take'`, `'camera'`): a new set replaces the old. Your props go when your resource stops.
 
+- **Other bones:** `bone` may be any ped bone. A bag on the back is bone 24818 (SKEL_Spine3).
+- **Still the same slot:** an emote, a progress bar, a give or a take replaces a worn bag as well. To keep one worn:
+  1. Watch `whip_core:heldProps:lost` for your tag, or poll `GetHeldPropsTag(src) == nil`.
+  2. When the hands are free again, call `HoldProps` again.
+- **Custom models:** a streamed prop needs its `.ytyp` as `data_file 'DLC_ITYP_REQUEST'`.
+
 ```lua
 exports.whip_core:HoldProps(source, { { model = 'prop_cs_police_torch', offset = { 0.1, 0.0, 0.0 } } }, 'torch')
 ```

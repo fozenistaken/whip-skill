@@ -779,8 +779,22 @@ Server local event `chatMessage(source, author, text)`: fired before delivery; `
 ## whip_core integration summary
 
 - Phone uses whip_core: `SecureCallback`, `Callback`, `RegisterItem`, `RegisterItemDefaultMetadata`, `RegisterPanelItem`, `RegisterAccessorySlot`, `GetAccessorySlots`, `RegisterUseHandler`, `FindItem`, `FindAllItems`, `GetItemAt`, `SetItemMetadata`, `GetItemCount`, `GetPlayer`, `GetPlayers({ light = true })`, `GetCharacterNames`, `CanSeePlayerName`, `CheckPicture`, `HasDevTools`, bank exports (`GetCharacterBankAccounts`, `GetBankAccount`, `GetBankTransactions`, `BankTransfer`, `GetBankAccessList`, `GrantBankAccess`, `CanGrantBankAccess`, `RevokeBankAccess`, `CreateBankAccount`, `CloseBankAccount`), job exports (`GetPlayerJobs`, `GetJob`, `GetJobEmployees`, `GetJobRoles`, `ClockOn`, `ClockOff`, `SetPlayerRole`, `FirePlayer`, `CanHirePlayer`, `HirePlayer`, `CreateJobRole`, `UpdateJobRole`, `DeleteJobRole`), `RegisterAskChannel`/`AnswerAsk`, `GetSkillCheckSettings`, `SkillCheck`, `AddAction`, `RegisterPadAction`, `SetScreenOpen`, `SetScreenArea`, `BlockControls`/`UnblockControls`, `PlayEmote`/`CancelEmote`/`IsEmoting`, `FreeHands`, `IsPlayerDead`, `IsGameInputFree`, `IsInventoryOpen`/`CloseInventory`, `Notify`, `Get/SetPlayerSetting('voice.callVolume')`, `GetLoreCharacters`/`GetLoreCharacter`; satellite helpers `Whip.register`, `Whip.ready`, `Whip.core`, `Whip.voice`, `Whip.voiceSystem`, `Whip.padScreen`, `Whip.skillCheckGame`, `Whip.card`, `Whip.command`.
-- whip_core calls into the phone only via `exports.whip_phone:ReloadCache()` (admin panel, `pcall`, only when started). whip_core "does not know the phone exists" otherwise: invites go through the ask channel; skill games through `Whip.skillCheckGame`.
-- Replacing the phone (doc `what-you-can-change`): stop `whip_phone` and run your own using `SetScreenOpen`, `SetScreenArea` and `FreeHands`. A phone-like ask channel: `RegisterAskChannel('phone', deliver)` (another running resource's name is refused).
+- whip_core calls one phone export: `exports.whip_phone:ReloadCache()` (admin panel, `pcall`, only when started). Invites go through the ask channel; skill games through `Whip.skillCheckGame`. But whip_core does read and write whip_phone's **tables** by name (see below).
+- Replacing the phone (doc `what-you-can-change`): stop `whip_phone` and run your own using `SetScreenOpen`, `SetScreenArea` and `FreeHands`. What another phone can take over (checked in whip_core 1.0.1):
+  - **Open:**
+    - **Ask channel:** `RegisterAskChannel('phone', deliver)` + `AnswerAsk`. Director job and team invites ask with `via = 'phone'`; another running resource's name is refused.
+    - **Director cards:** the `phone.*` namespace (whip_phone's cards are `phone.call`, `phone.giveContact`, `phone.sendText`). The first running resource to use a namespace owns it. Saved scenarios keep working only with the same card types, props and outputs.
+    - **Skill-check games:** `Whip.skillCheckGame`, with the same game ids (`'phone.reroute'` …) that callers and config name.
+    - **Controller button:** `RegisterPadAction('phone', …)` (`Config.Controller.Layout.dpad_up = 'phone'`). F3 is whip_phone's own key mapping, not whip_core's.
+    - **Phone slot:** `RegisterAccessorySlot({ slot = 1, accepts = { … } })`.
+    - **Emotes:** `PlayEmote('phone')` / `'phonecall'`.
+    - **Renames:** the `whip_core:character:renamed` event.
+    - **Calls:** whip_voice lines through `GetVoiceSystem`.
+  - **Hard-wired to whip_phone's schema:**
+    - The Director Lore page's phone details: raw SQL on `phone_numbers.loreKey`, `phone_messages` and `phone_calls` (`server/director/lore.lua:686`).
+    - The /whip Phones admin panel: edits `phone_numbers`, `phone_calls`, `phone_blocks` and `phone_messages`, then calls `ReloadCache` (`server/devtools.lua:1764-2370`).
+    - Migration 042: lists all `phone_*` tables as WHIP's own (`server/migrations.lua:89`).
+  - Another phone's tables should not reuse those names.
 - Chat uses whip_core: `SecureEvent`, `OpenComposer`/`FocusComposer`/`CloseComposer`/`IsComposerOpen`, `IsAnyScreenOpen` + `whip_core:ui:stateChanged`, `GetPlayerFullName`, `GetPlayersInRange`, `IsPlayerLoaded`, `NotifyPlayer`, `GetCommandAce`, `AddAction`, `IsControllerActive`, `Whip.playerSetting`, `Whip.command`. Replacing chat: any resource handling stock chat events.
 
 ## Gotchas
