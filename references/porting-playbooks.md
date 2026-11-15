@@ -228,6 +228,10 @@ Do not edit the user's files when they only asked how a port would work.
     `perModel` entry per model. For ATMs, reuse whip_core's `Config.AtmBadgeOffset` figures, for example
     `prop_atm_01 = { offset = vector3(-0.05, -0.20, 1.10), heading = 180.0 }`. `/actionplace <id>` aims one in
     game.
+  - DUI option labels beside physical side keys: one fixed row grid does not line up on every model. The keys
+    sit in front of a recessed screen, so from the scripted camera each side lines up at a different height
+    (seen in game: left rows about 9% lower than right). Send row centres per model and per side with the
+    model message, and add a dev command that shows the slots and moves them live, printing the config line.
   - Map props spawned for show (cash, card) are local: `CreateObject(..., false, false, false)`.
   - WHIP's ATMs have no server-known positions, so `near` cannot check that the player is at an ATM. Rate
     limits, the PIN session and the bank's own rules carry the security instead.
