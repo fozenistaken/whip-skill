@@ -362,7 +362,7 @@ class Scan:
             uses_whip = ('whip_core' in manifest) or any('exports.whip_core' in t or 'Whip.' in t for t in texts.values())
             if name.startswith('whip_') and name in ('whip_core',):
                 continue  # the framework itself
-            foreign = re.search(FOREIGN, manifest + '\n'.join(texts.values()))
+            foreign = re.search(FOREIGN, strip_comments(manifest) + '\n'.join(strip_comments(t) for t in texts.values()))
             # A resource already on WHIP gets the port pass only when it still carries another framework
             # (a half-done port); asked for explicitly with --mode port, it always runs.
             if self.mode == 'port' or (self.mode == 'all' and (foreign or not uses_whip)):
@@ -493,6 +493,8 @@ class Scan:
                         self.add('W022', 'HIGH', rel, line_of(text, m.start()), f'Client sends a value the server should decide: `{args.strip()[:50]}`',
                                  'Send nothing (or an id the server checks against its own table); price, item and amount come from server config', 'security.md')
                 for m in re.finditer(r'\bSetNuiFocus\(', text):
+                    if 'SetScreenOpen' in text:
+                        break  # focus beside WHIP's screen claim is the documented pattern
                     self.add('W050', 'MEDIUM', rel, line_of(text, m.start()), 'Own NUI focus',
                              'Ask WHIP for the screen with `SetScreenOpen` (one owner, released on stop)', 'ui-nui-camera.md')
                     break
@@ -523,11 +525,16 @@ class Scan:
                         self.add('W031', 'LOW', rel, i + 1, 'Remove then add as two calls',
                                  'One `StoreMove` call moves items between any two stores in one action/transaction', 'stores-containers-panels.md')
                         break
-            if re.search(r'MySQL\.(?:insert|update|query|prepare|rawExecute|transaction)', text) and \
-               re.search(r':(?:RemoveItem|AddItem|ChargePlayer|PayPlayer|StoreMove|StoreGive)\(', text):
-                m = re.search(r'MySQL\.(?:insert|update|query|prepare|rawExecute|transaction)', text)
-                self.add('W032', 'MEDIUM', rel, line_of(text, m.start()), 'Own SQL beside an inventory/money change',
-                         '`CommitWithAction(queries)` writes your rows in the same transaction as the action', 'core-concepts.md')
+            # own SQL within a few lines after a money/item change, in the same handler
+            for m in re.finditer(r':(?:RemoveItem|AddItem|ChargePlayer|PayPlayer|StoreMove|StoreGive)\(', text):
+                after = text[m.end():m.end() + 1500]
+                stop = re.search(r'\n(?:end\)|function\b|local function\b)', after)
+                after = after[:stop.start()] if stop else after
+                q = re.search(r'MySQL\.(?:insert|update|query|prepare|rawExecute|transaction)', after)
+                if q:
+                    self.add('W032', 'MEDIUM', rel, line_of(text, m.end() + q.start()), 'Own SQL right after an inventory/money change',
+                             '`CommitWithAction(queries)` writes your rows in the same transaction as the action', 'core-concepts.md')
+                    break
             for m in re.finditer(r'(?m)^\s*(?:exports\.whip_core|Whip\.core):ChargePlayer\(', text):
                 self.add('W034', 'HIGH', rel, line_of(text, m.start()), 'ChargePlayer result ignored',
                          '`local receipt, why = …ChargePlayer(…)`; refuse when false; `RefundPlayer(receipt)` if what they paid for fails', 'money-banks.md')

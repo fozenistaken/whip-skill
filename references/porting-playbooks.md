@@ -208,6 +208,24 @@ Do not edit the user's files when they only asked how a port would work.
   - creation: SecureEvent with a `'player'` param (target near) and a job permission
   - payment from a phone module or a prompt: `ChargePlayer(source, amount, { method = 'bank', reason = 'Invoice #n' })`, then `BankSystemDeposit` into the job account, plus `CommitWithAction` for the invoice row
 - **Trap:** balances never go below 0 (DB constraint). Any "allow overdraft" policy must change.
+- **Custom ATMs** (DUI screens, card + PIN; ported and tested: an `osm-atmdui`-style resource):
+  - WHIP puts its own ATM prompt on every model in whip_core's `Config.AtmProps`, and it has no settings-page
+    entry. Ask the user, then set `Config.AtmProps = {}` in whip_core's `config.lua` (back it up first), or
+    split the models between the two.
+  - Bind each card to one account (`GetDefaultBankAccount` at issue). Withdraw with `BankWithdraw` then
+    `PayPlayer` (cash). Deposit with `ChargePlayer` (cash), then `BankDeposit`, refunding on failure. Transfer
+    with `BankTransfer` to `GetBankAccount({ number = 'WB-######' })`: a keypad types only the six digits.
+    The bank's permission, frozen-account and own-character rules then apply by themselves.
+  - Never store a PIN in item metadata: the holder's game sees it. Keep a hash in your own table
+    (`GetPasswordHash` / `VerifyPasswordHash`, server natives), with the lockout server-side.
+  - A correct PIN opens a server-side session (card, account, expiry, `charId`). Withdraw/deposit/transfer
+    callbacks take amounts only. End the session on Esc and on `whip_core:player:logout`.
+  - After `BankWithdraw` waits, check `IsSessionCurrent` before paying the notes; otherwise put the money back
+    with `BankSystemDeposit`.
+  - The camera mode takes the screen with `SetScreenOpen(true, 'atm')` in place of a HUD toggle event.
+  - Map props spawned for show (cash, card) are local: `CreateObject(..., false, false, false)`.
+  - WHIP's ATMs have no server-known positions, so `near` cannot check that the player is at an ATM. Rate
+    limits, the PIN session and the bank's own rules carry the security instead.
 
 ## Playbook: phone apps, MDT, tablets
 - **WHIP owns:** the Duo phone (whip_phone). Every app is a module.
