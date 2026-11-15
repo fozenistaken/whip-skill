@@ -228,6 +228,16 @@ Minimal module:
 })();
 ```
 
+- **Own namespace:** pass `ns` when your resource already has SecureCallbacks named `<res>:state` etc. for its
+  own UI: `RegisterModule({ id = 'courier', script = 'web/phone/courier.js', ns = 'my-res:phone' })` makes
+  `app.request('state')` call `my-res:phone:state`.
+- **Buttons on a server notification:** `exports.whip_phone:Notify(src, { app = '<your module id>', key = 'offer',
+  actions = { { act = 'accept', label = 'Accept', tone = 'accept' } }, data = { id = 'f12' } })` runs your module's
+  `actions.accept(app, data)`; `Push(src, '<id>', 'gone', {})` + `app.dismiss('offer')` in `on.gone` takes it down.
+- **Try it in a browser:** copy `whip_phone/html` somewhere, add your module to `dev/mock.js` the way it adds
+  the `example` app (`{ id, script, ns, external = true }` in the `init` list, your request names in `handlers`),
+  serve the folder and open `preview.html?modules=<id>`. `window.whipPhone.os.openApp('<id>')` opens it.
+
 `window.WhipPhone` (frozen): `{ version, module(def), kit, icons }`. `module(def)` → `os.register(def, meta)`; returns `false` (console warning) when the id fails `/^[a-z][a-z0-9_-]{0,31}$/` or the def has neither `render` nor `mount`. Registering an id again unregisters the old one first. A script that loads but never calls `WhipPhone.module` with its id logs a warning.
 
 ## Phone: module definition (every field)

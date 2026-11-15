@@ -11,6 +11,7 @@ Every export named here is in `export-index.md`. Check options in the topic refe
 - How to present a port plan to the user
 - Playbook: shops and stores
 - Playbook: job resources (duty, boss menu, job garage, payroll)
+- Playbook: delivery, courier, taxi and other open jobs
 - Playbook: police
 - Playbook: EMS / ambulance
 - Playbook: mechanic and tuning
@@ -80,6 +81,12 @@ Do not edit the user's files when they only asked how a port would work.
 - **Surfaces:** `/whip` → Economy → Shops; prompts at the counter; prices editable in game.
 - **Trap:** `CreateShop`/`UpdateShop` do not resolve job keys or check `mode`; use `EnsureShop`
   (jobs-shops-properties-doors.md, Docs vs code).
+- **Trap:** a fresh WHIP server has no shops (`Config.Shops = {}`) and two groceries (`food` Burger, `drink`
+  Water Bottle). A port that buys from "a 24/7" needs one: declare each store with `EnsureShop` (`mode = 'npc'`,
+  `npcModel = 'mp_m_shopkeep_01'`, `settings = { categories, layout }` for the shelf tabs), register the goods with
+  `RegisterItem` (pictures from `whip_media_props`, inventory-items.md) and a use handler (`AddStat` hunger/thirst,
+  amounts as item `settings` so admins tune them). WHIP then does the keeper, prompt, shelf screen, basket,
+  checkout and shop talk. To know what someone paid (a refund), listen to `whip_core:shop:purchased`.
 
 ## Playbook: job resources (duty, boss menu, job garage, payroll)
 - **WHIP owns:**
@@ -94,6 +101,36 @@ Do not edit the user's files when they only asked how a port would work.
   - Payroll: `PayPlayer` or `BankSystemTransfer` from the business account, with a `reason`.
 - **Surfaces:** prompts with `require = { job, onDuty = true }` AND a server check; `ShowBlip` to `{ job = 'x', onDuty = true }`.
 - **Trap:** a level-100 role passes `HasJobPermission` for any permission name, typos included.
+
+## Playbook: delivery, courier, taxi and other open jobs
+Jobs anyone may do (no boss hires them), with a lent vehicle, offers and stops. Worked port: pure-delivery.
+- **The job:** `EnsureJob(key, { roles, selfClockOn = false })` in `Whip.register`. Signing on: if
+  `GetPlayerRole(src, key)` is nil, `HirePlayer(src, key, lowestRole)` (roles come highest first from
+  `GetJobRoles`), then `ClockOn(src, key)` without `by` (selfClockOn = false keeps the phone's Business app from
+  clocking people on without the vehicle and deposit). `ClockOff` at the end; listen to `whip_core:job:clockedOff`
+  and `whip_core:job:fired` to end a shift someone else ended. Progress levels can be roles (`SetPlayerRole`).
+- **The vehicle:** `SpawnTempVehicle(model, spot, { forSource, plate, idleDespawn = false })` (key included);
+  look via `SetVehicleAppearance(id, { customColor1 = { r, g, b } })`; tank via `SetVehicleStat(id, 'fuel', n)` when
+  whip_fuel runs; `DeleteVehicle(id)` at the end. Read `GetVehicle(id).entity` again if the entity is gone.
+- **The deposit:** `HoldMoney`, not a charge: `SpendMoneyHold(id, keep)` whenever the vehicle's state changes
+  (what WHIP keeps if the player leaves or the resource stops), `SettleMoneyHold(id, keep)` at the end. A crash
+  refunds it at next login by itself; no "refund owed" table.
+- **Stops:** one server point per stop for that player only (`AddPoint` with `audience = { people = { src } }`;
+  a second point with `reach = 7, require = { vehicle = 'in' }` for hand-over from the car). `onUse` starts a
+  thread with `Progress(src, { near = { coords, range }, disable = { move, car, combat } })`, then pays. No client
+  report ever says "delivered". The route: `ShowBlip({ people = { src } }, id, { route = true })`.
+- **Clerks:** `SpawnNpc` (`conditions = { invincible = true, canMove = false }`) + `AddPoint` on its `netId`.
+  Despawn your old NPC ids before spawning again in `Whip.register` (it runs again after a whip_core restart).
+- **Pay:** `PayPlayer(src, n, { method, reason })` per stop; a restaurant's cut: `GetJobBankAccounts(job)[1]` +
+  `BankSystemDeposit`. `LogActivity` for shift start/end, payouts, suspect speeds.
+- **Settings:** the whole config on one `Whip.configPage`: `{min,max}` pairs as `list` with `minItems = maxItems =
+  2`, level tables as `records`, areas as `records` with a `vec3` and `widget = 'mapPoints'`. There are no
+  presets: drop a "Basic/Advanced" panel. Admin tools that are not settings (place editors) stay, behind
+  `RegisterPermission` + `HasPermission`.
+- **Phone:** a module (phone-chat-loadingscreen.md) with offers as `exports.whip_phone:Notify` capsules whose
+  `actions` run the module's own actions.
+- **Traps:** WHIP's maps draw no radius circles: show surge or service areas as point blips. `HasPermission` is
+  true for full admins only while their developer mode is on.
 
 ## Playbook: police
 - **WHIP owns:**

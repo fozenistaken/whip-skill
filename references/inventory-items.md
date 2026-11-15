@@ -133,6 +133,11 @@ Icon resolution (`Inventory.resolveItemImage`, inventory.lua:1431):
 4. Owner unknown (`GetInvokingResource()` nil at registration): no icon.
 
 - WebP wins over PNG when both exist; prefer WebP (every player downloads every icon).
+- **Pictures without drawing any:** WHIP's media pack `whip_media_props` (installed by the recipe in
+  `resources/[assets]/[media]`) holds a 256 px render of about 14,600 GTA props at `img/props/<model>.webp`.
+  An item can point at one: `image = '@whip_media_props/img/props/prop_ecola_can.webp'` (groceries: `prop_ld_can_01`,
+  `prop_cs_milk_01`, `v_ret_247_noodle1`, `v_ret_247_bread1`, ...). Check the file exists first. The pictures are
+  Rockstar's (the pack's NOTICE.md): reference them, do not copy them into a published resource.
 - Required in your fxmanifest: `files { 'html/img/items/*.webp', 'html/img/items/*.png' }` (or the one you use). Without it the "missing" picture shows.
 - Lookups are cached per resource; a resource (re)start clears its cache and tells clients (`whip_core:client:itemDefsStale`). A new picture shows after its resource restarts.
 
