@@ -361,6 +361,11 @@ Returns: `true`, or `false, why` (`'no such player'`, `'props is a list of { mod
   1. Watch `whip_core:heldProps:lost` for your tag, or poll `GetHeldPropsTag(src) == nil`.
   2. When the hands are free again, call `HoldProps` again.
 - **Custom models:** a streamed prop needs its `.ytyp` as `data_file 'DLC_ITYP_REQUEST'`.
+- **How `rot` is read:** WHIP ties every held prop with `AttachEntityToEntity(obj, ped, GetPedBoneIndex(ped, bone),
+  ox, oy, oz, rx, ry, rz, true, true, false, true, 1, true)` (`client/ui.lua` `tieHeld`): `isPed` true, rotation
+  order **1** (turn about y, then z, then x). A preview or placement tool of your own must attach the same way, or
+  the angles it saves come out wrong in game for any turn about two axes. `tools/hand_edit.lua` (`anglesOf`) turns a
+  prop's axes in the bone's frame into these three angles.
 
 ```lua
 exports.whip_core:HoldProps(source, { { model = 'prop_cs_police_torch', offset = { 0.1, 0.0, 0.0 } } }, 'torch')
