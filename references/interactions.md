@@ -35,6 +35,10 @@ WHIP's single interaction system (it replaces ox_target / qb-target / qb-radialm
 - Server-side prompts use `AddPoint`; the press is re-checked on the server (distance, audience, requirements) and `onUse(source, use)` runs there. On clients a point is mounted as core action `rpoint:<pointId>` (`client/runtime_points.lua:22`).
 - E (A on a pad) acts on the focused prompt. Prompts hide while a screen/bar holds input, while the player is dead (unless `require.alive = false`), and while in a vehicle (unless `require.vehicle = 'in'`). Ground items, containers, doors make their own prompts.
 - `onSelect` runs in its own thread (it may Wait). `label` / `icon` / `image` functions and `canInteract` are called every draw/pass and must not wait.
+- **Many prompts: use plain text, not functions.** A function field is called every frame for every prompt in view,
+  and each call crosses from whip_core into your resource. Measured on a store with ~90 product prompts:
+  function labels cost about 0.7 ms on the resource and pushed whip_core from about 0.3 to 0.9 ms. When the text
+  changes rarely (a price), give a string and `UpdateAction` it (or remove and add again) when it changes.
 - Validation is lenient except `require`: unknown fields, wrong types, out-of-range numbers are warned (F8 + third return) and dropped or clamped; an unknown `require` word refuses the whole action (an ignored requirement would open it to everyone).
 
 ## Config keys that matter
