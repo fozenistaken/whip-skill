@@ -175,6 +175,129 @@ FOREIGN = (r"qb-core|QBCore\.|es_extended|ESX\.|qbx_core|QBX\.|ox_core|Ox\.GetPl
            r"qb-target|qb-inventory|lib\.callback|lib\.notify|lib\.progressBar|lib\.registerContext")
 
 
+_NAMES = None
+
+
+def load_names():
+    """references/whip-names.json, or {} when it is missing (the invented-name checks are then skipped)."""
+    global _NAMES
+    if _NAMES is None:
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'references', 'whip-names.json')
+        try:
+            _NAMES = json.load(open(p, encoding='utf-8'))
+        except Exception:
+            _NAMES = {}
+    return _NAMES
+
+
+def table_keys(text, start):
+    """Top-level `key =` names of the Lua table whose `{` is at text[start]. Assignments inside function
+    bodies (`onSelect = function() local ok = … end`) are not keys: a block counter skips them."""
+    keys, depth, block, i, n = [], 0, 0, start, len(text)
+    while i < n:
+        c = text[i]
+        if c in '"\'':
+            q, i = c, i + 1
+            while i < n and text[i] != q:
+                i += 2 if text[i] == '\\' else 1
+        elif c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return keys
+        elif (c.isalpha() or c == '_') and not (text[i - 1].isalnum() or text[i - 1] in '_.:'):
+            w = re.match(r'[A-Za-z_]\w*', text[i:i + 80]).group(0)
+            if w == 'function' or (block and w in ('if', 'do', 'repeat')):
+                block += 1
+            elif block and w in ('end', 'until'):
+                block -= 1
+            elif depth == 1 and not block and re.match(r'\s*=(?!=)', text[i + len(w):i + len(w) + 4]):
+                keys.append(w)
+            i += len(w)
+            continue
+        i += 1
+    return keys
+
+
+def match_close(text, i):
+    """Index of the bracket closing the one at text[i] ( ( [ or { ), or -1."""
+    pairs = {'(': ')', '{': '}', '[': ']'}
+    stack, n = [], len(text)
+    while i < n:
+        c = text[i]
+        if c in '"\'':
+            q, i = c, i + 1
+            while i < n and text[i] != q:
+                i += 2 if text[i] == '\\' else 1
+        elif c in pairs:
+            stack.append(pairs[c])
+        elif stack and c == stack[-1]:
+            stack.pop()
+            if not stack:
+                return i
+        i += 1
+    return -1
+
+
+def nth_arg(text, paren, n):
+    """Start index (first non-space) of the n-th argument (1-based) of the call whose `(` is at paren."""
+    end = match_close(text, paren)
+    if end < 0:
+        return None
+    i, k, start = paren + 1, 1, paren + 1
+    while i < end:
+        c = text[i]
+        if c in '({[' or c in '"\'':
+            j = match_close(text, i) if c in '({[' else text.find(c, i + 1)
+            i = (j if j > 0 else end) + 1
+            continue
+        if c == ',':
+            if k == n:
+                break
+            k, start = k + 1, i + 1
+        i += 1
+    if k != n:
+        return None
+    while start < end and text[start] in ' \t\r\n':
+        start += 1
+    return start
+
+
+def sub_tables(text, pos, sub):
+    """Positions of the nested tables `sub` ('at', or 'options[]' = each table in the options list)."""
+    name, each = (sub[:-2], True) if sub.endswith('[]') else (sub, False)
+    end = match_close(text, pos)
+    out, depth, i = [], 0, pos
+    while i < end:
+        c = text[i]
+        if c in '"\'':
+            j = text.find(c, i + 1)
+            i = (j if j > 0 else end) + 1
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+        elif depth == 1:
+            m = re.match(name + r'\s*=\s*\{', text[i:i + 40])
+            if m and not (text[i - 1].isalnum() or text[i - 1] == '_'):
+                t = i + m.end() - 1
+                if not each:
+                    out.append(t)
+                else:
+                    close, j = match_close(text, t), t + 1
+                    while 0 < j < close:
+                        if text[j] == '{':
+                            out.append(j)
+                            j = match_close(text, j)
+                        j += 1
+                i = t
+                continue
+        i += 1
+    return out
+
+
 def side_of(rel):
     r = rel.replace('\\', '/').lower()
     name = r.rsplit('/', 1)[-1]
@@ -260,6 +383,57 @@ class Scan:
                         continue  # already a WHIP call
                     self.add(rid, sev, rel, line_of(text, m.start()), f'{what}: `{m.group(0)[:60]}`', fix, ref)
                     break  # first hit per file per rule; the port touches the whole file anyway
+
+    def invented(self, rel, side, raw):
+        """W070-W073: names WHIP does not have. Uses references/whip-names.json (scripts/whip_names.py)."""
+        names = load_names()
+        if not names:
+            return
+        text = strip_comments(raw)
+        exports, helpers = names['exports'], set(names['helpers'])
+        for m in re.finditer(r"(?:exports\.whip_core|exports\[['\"]whip_core['\"]\]|Whip\.core)\s*:\s*([A-Za-z_]\w*)\s*\(", text):
+            n = m.group(1)
+            if n not in exports:
+                self.add('W070', 'HIGH', rel, line_of(text, m.start()), f'`{n}` is not a whip_core export',
+                         'Find the real call in references/export-index.md (or the topic reference); never guess a WHIP name', 'export-index.md')
+            elif side in ('server', 'client') and side not in exports[n]:
+                self.add('W070', 'MEDIUM', rel, line_of(text, m.start()),
+                         f"`{n}` is a {'/'.join(exports[n])} export, called from a {side} file",
+                         'Call it on its own side (export-index.md lists both sides separately)', 'export-index.md')
+        for m in re.finditer(r'\bWhip\.([A-Za-z_]\w*)\b', text):
+            if m.group(1) not in helpers:
+                self.add('W070', 'HIGH', rel, line_of(text, m.start()), f'`Whip.{m.group(1)}` is not a satellite helper',
+                         'The Whip.* helpers are listed in core-concepts.md (satellite helper)', 'core-concepts.md')
+        evs, prefixes = set(names['events']), tuple(names['event_prefixes'])
+        for m in re.finditer(r"(AddEventHandler|RegisterNetEvent|TriggerEvent|TriggerServerEvent|TriggerClientEvent)\(\s*['\"](whip_core:[^'\"]+)['\"]", text):
+            ev = m.group(2)
+            if ev.endswith(':'):
+                continue  # a prefix the code completes ('whip_core:job:' .. kind): checked where it is fired
+            if ':client:' in ev or ':server:' in ev:
+                self.add('W071', 'MEDIUM', rel, line_of(text, m.start()), f'`{ev}` is one of WHIP\'s own network messages',
+                         'Not an API: it may change or be refused. Use the documented whip_core:<domain>:<pastTense> events or an export', 'events-and-data.md')
+            elif ev not in evs and not ev.startswith(prefixes):
+                self.add('W071', 'HIGH', rel, line_of(text, m.start()), f'`{ev}` is not an event WHIP fires',
+                         'Pick a real event from events-and-data.md; never guess an event name', 'events-and-data.md')
+        for call, spec in names['fields'].items():
+            for m in re.finditer(r"(?:exports\.whip_core|Whip\.core)\s*:\s*" + call + r"\s*\(", text):
+                arg = nth_arg(text, m.end() - 1, spec['arg'])
+                if arg is None or text[arg] != '{':
+                    continue
+                self.check_keys(rel, text, arg, call, '', spec['keys'], spec)
+                for sub, allowed in (spec.get('nested') or {}).items():
+                    for pos in sub_tables(text, arg, sub):
+                        self.check_keys(rel, text, pos, call, sub, allowed, spec)
+
+    def check_keys(self, rel, text, pos, call, where, allowed, spec):
+        allowed = set(allowed)
+        for k in table_keys(text, pos):
+            if k not in allowed:
+                sev = 'MEDIUM' if 'InteractSpec' in spec['source'] or 'FIELDS' in spec['source'] or 'SCHEMA' in spec['source'] else 'LOW'
+                near = [a for a in sorted(allowed) if a.lower().startswith(k.lower()[:3])][:3]
+                self.add('W072', sev, rel, line_of(text, pos), f"`{call}`{(' ' + where) if where else ''}: `{k}` is not a key it reads",
+                         f"Allowed: see the reference ({spec['source']})" + (f"; did you mean {', '.join(near)}?" if near else ''),
+                         'export-index.md')
 
     def review_pass(self, res, name, manifest, files, texts):
         mrel = os.path.relpath(os.path.join(res, 'fxmanifest.lua'), self.root)
@@ -367,6 +541,7 @@ class Scan:
             for m in re.finditer(r'\b(?:type|tostring|tonumber|json\.encode)\(\s*exports\.whip_core:', text):
                 self.add('W041', 'LOW', rel, line_of(text, m.start()), 'Export result passed straight into another call',
                          'A nil return arrives as no value: assign to a local first', 'core-concepts.md')
+            self.invented(rel, side, raw)
             # name prefixes
             for m in re.finditer(r":(RegisterItem|RegisterStat|RegisterVehicleStat)\(\s*['\"]([\w-]+)['\"]", text):
                 if not m.group(2).startswith(name.split('_example')[0].replace('whip_', '') + '_') and not m.group(2).startswith(name + '_'):

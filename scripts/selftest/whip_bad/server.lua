@@ -7,3 +7,6 @@ RegisterNetEvent('bad:buy', function(price)
     MySQL.insert('INSERT INTO log (src) VALUES (?)', { source })
 end)
 RegisterCommand('givecoffee', function(src) end)
+-- invented names (QBCore habits): the scanner must catch these
+AddEventHandler('whip_core:player:joined', function() end)
+RegisterCommand('cash', function(src) exports.whip_core:GivePlayerMoney(src, 5) end)

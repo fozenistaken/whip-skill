@@ -23,9 +23,12 @@ Not affiliated with WHIP or WHIPFX. MIT licence (see `LICENSE`).
 ## Inside
 
 ```
-SKILL.md                         entry point: ground rules, reference map, the rules, workflows
+SKILL.md                         entry point (short): never-invent rules, core rules, workflows, reference map
+AGENTS.md                        setup for Codex, Cursor and other agents (points to SKILL.md)
 references/
   export-index.md                all 580 whip_core exports (generated from whip_core/types)
+  whip-names.json                every real export, helper, event and option key (generated; used by the scanner)
+  sources.md                     official links, every repo pinned to its commit, how to check a citation
   core-concepts.md               ids, Whip.register, return values, registration rule, satellite helper, examples
   porting-to-whip.md             QBCore / Qbox / ESX / ox mapping tables, rewrites, procedure, checklist
   porting-playbooks.md           per script type (shops, jobs, police, EMS, housing, heists, ...) + worked case
@@ -47,7 +50,9 @@ references/
   gunny-weapons.md, rope.md, autos-fuel-dealership.md, voice.md, phone-chat-loadingscreen.md,
   install-packs-testing.md       the WHIP satellite resources, install and packs
 scripts/
-  whip_scan.py                   port finder (--mode port, --plan) and WHIP-way reviewer (--mode review)
+  whip_scan.py                   port finder (--mode port, --plan) and WHIP-way reviewer (--mode review);
+                                 flags invented exports, events and option keys (W070-W072)
+  whip_names.py                  regenerates references/whip-names.json from whip_core
   whip_host.py                   server setup step 1 (scan the machine) and install check
   install_whip.py                install WHIP without txAdmin from the live recipe (--create-db, --game enhanced)
   export_index.py                regenerates export-index.md from whip_core/types

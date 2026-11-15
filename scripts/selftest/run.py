@@ -9,7 +9,7 @@ def rules(path, mode='all'):
     return json.loads(out.stdout)
 expect = {
     'qb_shop': {'P001', 'P003', 'P005', 'P011', 'P020', 'P023', 'P024', 'P030', 'P032', 'P050', 'P052', 'P053', 'P055', 'P010'},
-    'whip_bad': {'W001', 'W002', 'W010', 'W020', 'W021', 'W022', 'W030', 'W032', 'W034', 'W050', 'W051', 'W052', 'W053', 'W060'},
+    'whip_bad': {'W001', 'W002', 'W010', 'W020', 'W021', 'W022', 'W030', 'W032', 'W034', 'W050', 'W051', 'W052', 'W053', 'W060', 'W070', 'W071', 'W072'},
 }
 fail = 0
 for fx, want in expect.items():
