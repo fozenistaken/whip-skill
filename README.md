@@ -15,7 +15,10 @@ ESX and ox_core. This skill gives Claude the framework's complete API surface an
 git clone https://github.com/fozenistaken/whip-skill ~/.claude/skills/fivem-whip
 ```
 
-Or copy this folder so that `~/.claude/skills/fivem-whip/SKILL.md` exists. Then restart Claude Code. The scripts
+Or copy this folder so that `~/.claude/skills/fivem-whip/SKILL.md` exists. Then restart Claude Code.
+
+The skill checks for a newer version of itself at the start of a session (`scripts/check_update.py`, which only
+compares `VERSION` with GitHub and tells you). To update a clone: `git -C ~/.claude/skills/fivem-whip pull`. The scripts
 need Python 3.9+ (standard library only).
 
 Not affiliated with WHIP or WHIPFX. MIT licence (see `LICENSE`).
@@ -53,6 +56,7 @@ scripts/
   whip_scan.py                   port finder (--mode port, --plan) and WHIP-way reviewer (--mode review);
                                  flags invented exports, events and option keys (W070-W072)
   whip_names.py                  regenerates references/whip-names.json from whip_core
+  check_update.py                is a newer version of this skill on GitHub? (reads only)
   whip_host.py                   server setup step 1 (scan the machine) and install check
   install_whip.py                install WHIP without txAdmin from the live recipe (--create-db, --game enhanced)
   export_index.py                regenerates export-index.md from whip_core/types
@@ -81,3 +85,6 @@ commit `d12235f`), with facts checked against the source code. `references/sourc
 the exact commit used, explains how to open any `repo/path:line` citation on GitHub, and lists every docs anchor. Where docs and code differ, the references say so ("Docs vs code").
 WHIP's code is LGPL-3.0. The example resources under `assets/examples` are MIT and unchanged. The starter
 template is original. Regenerate `export-index.md` after a WHIP update.
+
+When you publish a change, raise `VERSION` (year.month.day, or add `.1` for a second release that day) so
+older copies see it.

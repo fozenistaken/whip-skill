@@ -232,6 +232,12 @@ Implemented once in `shared/registry.lua` (~40 registries; server and client eac
 
 Prefixes: items, right-click action names, stats, vehicle stats, server zone ids and permissions are one server-wide list, first come first served. Prefix with your resource name + `_` (`mycafe_coffee`); events/callbacks use `:` (`mycafe:buy`). Unprefixed names still work but a prefixed registry prints once per resource, 3 s after registration, a yellow line like `[whip_core] mycafe registers 3 items whose names do not start with "mycafe" (coffee, bagel, tea)...`. Accepted separators after the resource name: `_ : . -`, case-insensitive. Exempt: whip_core and any `whip_*` resource.
 
+The resource name is the folder name, which you do not control once you publish: a GitHub ZIP unpacks as
+`<repo>-main` (seen with an ATM resource: `whip-atmdui-main registers 2 items whose names do not start with...`).
+Build item keys (and their `image` paths) from `GetCurrentResourceName()` instead of writing `myres_card` by hand:
+`local CARD = GetCurrentResourceName() .. '_card'`. Tell server owners to pick the folder name once: renaming it
+later renames the items, and items already handed out keep the old key.
+
 Names WHIP already uses: items `phone`, `sim_card`, `rope`, `radio`, `megaphone`, `nitro`, whip_gunny's weapons/magazines/ammo (`weapon_pistol`...), every item in whip_core's `config.lua`; vehicle stats `nitro`, `boost`, `fuel`. `/whip` → Economy → Items shows each key's owner.
 
 ### GetRegistrations(resource?) — BOTH

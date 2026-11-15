@@ -361,6 +361,14 @@ Returns: `true`, or `false, why` (`'no such player'`, `'props is a list of { mod
   1. Watch `whip_core:heldProps:lost` for your tag, or poll `GetHeldPropsTag(src) == nil`.
   2. When the hands are free again, call `HoldProps` again.
 - **Custom models:** a streamed prop needs its `.ytyp` as `data_file 'DLC_ITYP_REQUEST'`.
+- **Someone else's held prop:** `GetOwnHeldProp` finds only your own. To draw things on another player's held prop
+  (goods inside a basket), put what to draw in a player state bag (`Player(src).state:set(key, list, true)`) and let
+  each game near them find the object tied to their ped (`GetEntityAttachedTo(obj) == ped` with your model, from
+  `GetGamePool('CObject')`, cached and re-checked with `DoesEntityExist`) and attach local props to it. WHIP has no
+  export for another player's held prop.
+- **Local props tied to a held prop** come loose and fly off when WHIP deletes it (`DropHeldProps`, paying, an
+  emote). Clear the state bag before dropping, delete your props in an `AddStateBagChangeHandler`, and while any
+  are shown check the held prop with `DoesEntityExist` every 100 ms (seen in game).
 - **How `rot` is read:** WHIP ties every held prop with `AttachEntityToEntity(obj, ped, GetPedBoneIndex(ped, bone),
   ox, oy, oz, rx, ry, rz, true, true, false, true, 1, true)` (`client/ui.lua` `tieHeld`): `isPed` true, rotation
   order **1** (turn about y, then z, then x). A preview or placement tool of your own must attach the same way, or

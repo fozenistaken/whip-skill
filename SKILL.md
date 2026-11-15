@@ -7,6 +7,9 @@ description: The WHIP FiveM framework (whipfx.net, github.com/WHIPFX, Nov 2026),
 
 Docs: https://whipfx.net/docs/ · Source: https://github.com/WHIPFX · FiveM natives: https://docs.fivem.net/natives/ · FiveM docs: https://docs.fivem.net/docs/
 
+**First, once per session:** run `python -I scripts/check_update.py --quiet`. If it prints a newer version, tell the
+user and give them the update command it prints; do not update the skill yourself. Silence means up to date.
+
 WHIP was released in November 2026, so you have no training data on it. Every name you write must come from
 this skill's references or WHIP's source.
 
