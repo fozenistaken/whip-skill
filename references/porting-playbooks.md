@@ -83,10 +83,16 @@ Do not edit the user's files when they only asked how a port would work.
   (jobs-shops-properties-doors.md, Docs vs code).
 - **Trap:** a fresh WHIP server has no shops (`Config.Shops = {}`) and two groceries (`food` Burger, `drink`
   Water Bottle). A port that buys from "a 24/7" needs one: declare each store with `EnsureShop` (`mode = 'npc'`,
-  `npcModel = 'mp_m_shopkeep_01'`, `settings = { categories, layout }` for the shelf tabs), register the goods with
-  `RegisterItem` (pictures from `whip_media_props`, inventory-items.md) and a use handler (`AddStat` hunger/thirst,
-  amounts as item `settings` so admins tune them). WHIP then does the keeper, prompt, shelf screen, basket,
-  checkout and shop talk. To know what someone paid (a refund), listen to `whip_core:shop:purchased`.
+  `npcModel = 'mp_m_shopkeep_01'`), register the goods with `RegisterItem` (pictures from `whip_media_props`,
+  inventory-items.md) and a use handler (`AddStat` hunger/thirst, amounts as item `settings` so admins tune them).
+  WHIP then does the keeper, prompt, shelf screen, basket, checkout and shop talk. To know what someone paid (a
+  refund), listen to `whip_core:shop:purchased`.
+- **Trap (whip_core 1.0.1):** do NOT pass `settings` to `EnsureShop` for a NEW shop. `Shops.ensureShop`
+  (`server/shops.lua:1745-1746`) puts `settings.ensured = { decl = d }` into the declared settings table itself, so
+  it contains itself and the save fails: `SCRIPT ERROR: maximum table nesting depth exceeded`, then
+  `An error occurred while calling export EnsureShop`. Declare the shop without `settings`, then set the shelf
+  tabs once with `SetShopLayout(shop.shopId, { categories, layout })` when `shop.settings.categories` is unset
+  (later the shop's managers own the shelf).
 
 ## Playbook: job resources (duty, boss menu, job garage, payroll)
 - **WHIP owns:**
