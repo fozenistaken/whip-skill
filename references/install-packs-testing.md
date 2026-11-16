@@ -617,7 +617,7 @@ From `#testing`, `#measuring`, `#export-costs` (details in the dev-tools referen
 - Inventory screen without the game: `node whip_core/dev/inventory-preview/preview.js my_inventory_ui`.
 - Director: `TestDirectorCard(type, props, { player = source })`, `TestDirectorScenario`.
 - Second player: pass `{ charId = n }` for another character of yours; two FiveM clients on one PC; turn off `Config.BlockOwnCharacterTransfers` on a test server to move money between them.
-- `/w` → Kill Me, Restore Health & Armour, Repair Vehicle; `/whip` → System → Monitor (SecureEvent calls, refusal reasons, handler time); `whiperrors` / `GetErrorLog`.
+- `/w` → Kill Me, Restore Player Cores, Repair Vehicle; `/whip` → System → Monitor (SecureEvent calls, refusal reasons, handler time); `whiperrors` / `GetErrorLog`.
 - Cost: `/whipcost` (client, developer mode), `WhipCost.start()`/`WhipCost.stop('label', t)` via `@whip_core/lib/cost.lua`, `MeasureFrames({ seconds })`, server console `whipcost [seconds]`, `profiler record 500` + `profiler view` with `setr whip_profiling 1`.
 
 ## WHIPFX org policies (.github)

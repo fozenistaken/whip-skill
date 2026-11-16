@@ -467,7 +467,7 @@ Replacing screens: every screen's look = a theme (`theme.css` resource via `Conf
 | Director card/scenario | `TestDirectorCard(type, props, { player = source })`, `TestDirectorScenario(doc, opts)` |
 | Something done to another player | pass `{ charId = n }` of your second character, then log in as them |
 | Two players | two FiveM clients on one PC, same account, different characters; turn off `Config.BlockOwnCharacterTransfers` on a test server to move money between them |
-| Dying, healing, broken car | `/w` → Kill Me, Restore Health & Armour, Repair Vehicle |
+| Dying, healing, broken car | `/w` → Kill Me, Restore Player Cores, Repair Vehicle |
 | What your events did | `/whip` → System → Monitor |
 | Missed errors | `whiperrors` (server console; F8 in dev mode); `GetErrorLog(opts?)` → `{ entries = { { seq, at, side, resource, kind = 'error'|'warning', text, count } }, last, side }` (last 200, `since`, `max`) |
 

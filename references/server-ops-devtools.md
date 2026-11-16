@@ -229,7 +229,7 @@ Arrow keys move, Enter toggles, Esc closes; a tool stays on until switched off (
 | Noclip | Fly, invisible, invincible: WASD, Space/Ctrl, Shift faster |
 | Invisible | Nobody sees you; you see yourself at half opacity |
 | God Mode | No damage, health kept full |
-| Restore Health & Armour | Once: revive if down (as `/whip_revive`), fill both |
+| Restore Player Cores | Once: revive if down (as `/whip_revive`), then fill health, armour, hunger and thirst (1.1.0; was Restore Health & Armour) |
 | Reveal Players | Every player as named blip; within 250 m a tag: character name, charId, account name |
 | Kill Me | Once: an ordinary death (Noclip and God Mode off first) |
 | Repair Vehicle | Once: repairs the car you are in |

@@ -1,6 +1,6 @@
 # whip_gunny: weapons, magazines, calibers, attachments, packs
 
-What whip_gunny (WHIP's weapon system, v2.0.0) does, its data model, every export and event, its item names, and how it uses whip_core. It also covers whip_core's weapon catalog and weapon guard. Built from doc anchors `#guide-weapons`, `#gunny-bench`, `#gunny-items`, `#gunny-give-take`, `#gunny-each-shot`, `#gunny-hud`, `#gunny-packs`, `#gunny-debug`, `#gunny-wont-reload`, `#gunny-patterns`, `#gunny-files`, `#gunny-exports`, `#giveweapon`, `#givemagazine`, `#gunny-client`, `#getdrawnweapon` and `#gunny-events`. Checked against the whole `whip_gunny/` repo and `whip_core/shared/weapon_catalog.lua`, `shared/gta_weapons.lua`, `shared/gta_weapon_models.lua`, `client/weapon_guard.lua`, `lib/satellite.lua` and `types/*.lua`.
+What whip_gunny (WHIP's weapon system, v2.0.1) does, its data model, every export and event, its item names, and how it uses whip_core. It also covers whip_core's weapon catalog and weapon guard. Built from doc anchors `#guide-weapons`, `#gunny-bench`, `#gunny-items`, `#gunny-give-take`, `#gunny-each-shot`, `#gunny-hud`, `#gunny-packs`, `#gunny-debug`, `#gunny-wont-reload`, `#gunny-patterns`, `#gunny-files`, `#gunny-exports`, `#giveweapon`, `#givemagazine`, `#gunny-client`, `#getdrawnweapon` and `#gunny-events`. Checked against the whole `whip_gunny/` repo and `whip_core/shared/weapon_catalog.lua`, `shared/gta_weapons.lua`, `shared/gta_weapon_models.lua`, `client/weapon_guard.lua`, `lib/satellite.lua` and `types/*.lua`.
 
 ## Contents
 - Install, manifest and load order

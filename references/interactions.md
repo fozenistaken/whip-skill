@@ -34,7 +34,7 @@ WHIP's single interaction system (it replaces ox_target / qb-target / qb-radialm
 - Internally each action is mounted as engine entry `act:<resource>:<id>` (one per option `act:<resource>:<id>#<optionId>` on car parts / the wheel when there are several options) (`client/actions.lua:503`).
 - Server-side prompts use `AddPoint`; the press is re-checked on the server (distance, audience, requirements) and `onUse(source, use)` runs there. On clients a point is mounted as core action `rpoint:<pointId>` (`client/runtime_points.lua:22`).
 - E (A on a pad) acts on the focused prompt. Prompts hide while a screen/bar holds input, while the player is dead (unless `require.alive = false`), and while in a vehicle (unless `require.vehicle = 'in'`). Ground items, containers, doors make their own prompts.
-- `onSelect` runs in its own thread (it may Wait). `label` / `icon` / `image` functions and `canInteract` are called every draw/pass and must not wait.
+- `onSelect` runs in its own thread (it may Wait). `label` / `icon` / `image` functions are called every draw and must not wait. `canInteract` must not wait either: since whip_core 1.1.0 the prompt's display asks it at most every 100 ms while its `ctx` is unchanged (a table value in `ctx` always asks again), and a press always asks it fresh (`client/actions.lua` `check`).
 - **Many prompts: use plain text, not functions.** A function field is called every frame for every prompt in view,
   and each call crosses from whip_core into your resource. Measured on a store with ~90 product prompts:
   function labels cost about 0.7 ms on the resource and pushed whip_core from about 0.3 to 0.9 ms. When the text
@@ -116,7 +116,7 @@ Exactly one "place" key: `coords`, `entity`, `netId`, `model`, `vehiclePart`, `a
 | `{ model = 'prop_x' \| {list}, offset?, heading?, faces?, perModel? }` | `'props'` | Every prop of the model(s) nearby, offered on the nearest one, never from inside a car. Names only (hash refused). `offset`: x across, y out of its face, z up. `heading`: sign at that turn from the prop's facing (try 0/90/180); none = faces the player. `faces = 2` for two-sided props. `perModel = { ['prop_x'] = { offset, heading } }` overrides one model (what it leaves out comes from the action's). `/actionplace <id>` aims it and copies the line |
 | `{ vehiclePart = 'hood' }` | `'part'` | See Car parts |
 | `{ radial = true }` | `'radial'` | F1 wheel entry, sorted by label |
-| `{ aimBox = 'vehicle' \| 'object' \| 'ped' \| 'world' \| {list} }` | `'aimbox'` | See Aim boxes. Casts a ray every frame: add only while meaningful |
+| `{ aimBox = 'vehicle' \| 'object' \| 'ped' \| 'world' \| {list}, aimModels? }` | `'aimbox'` | See Aim boxes. Casts a ray every frame (since 1.1.0 one ray per frame shared by every aim box with the same settings): add only while meaningful. `aimModels` (1.1.0): a non-empty list of model names or hashes; the action is offered only on those models, checked before `canInteract` (otherwise refused: `'at.aimModels is a non-empty list of model names or hashes'`) |
 
 ## require: who may use it
 
@@ -139,7 +139,7 @@ Type rules (`shared/interact_spec.lua:509`): `alive` boolean; `vehicle` `'in'|'o
 
 - `vehiclePart` actions refuse `alive = false` and `vehicle = 'in'` (always used on foot, alive).
 - Options: an option's `require`/`canInteract` add to the action's (can only narrow). Exception: `alive` and `vehicle` resolve option-first, else the action's (`requireField`, `client/actions.lua:291`) — an option can say `alive = false` alone.
-- Cost: `require` is free; `canInteract` crosses into your resource on every pass (about 95×/s per option near a car). For state only you know, add the action while it holds and remove it after.
+- Cost: `require` is free; `canInteract` crosses into your resource each time it is asked (before 1.1.0 about 95×/s per option near a car; now at most every 100 ms for the display). For state only you know, add the action while it holds and remove it after. On an aim box, `at.aimModels` filters by model before `canInteract` is asked at all.
 - Doors read rules the other way round (any one passes) — a door's `jobs` key is NOT an action `require` word.
 
 ## ctx: what your callbacks get

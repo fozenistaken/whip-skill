@@ -2087,6 +2087,7 @@
   "whip_core:server:closeShop",
   "whip_core:server:closeStore",
   "whip_core:server:closeVehicleStorage",
+  "whip_core:server:cmContainerReach",
   "whip_core:server:cmGetAll",
   "whip_core:server:cmOpenContainer",
   "whip_core:server:conversationChoice",
@@ -2423,6 +2424,7 @@
     ],
     "at": [
      "aimBox",
+     "aimModels",
      "bone",
      "coords",
      "entity",

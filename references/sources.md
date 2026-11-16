@@ -26,8 +26,10 @@ Use this file when something in the skill does not match what a server does: a r
 
 Snapshot of 2026-11-14/15. `main` may be newer: compare before trusting a detail. Line citations use the
 pinned commits below; `export-index.md` and `whip-names.json` were regenerated from whip_core
-[`0d74872`](https://github.com/WHIPFX/whip_core/tree/0d74872e189370ce818bb076d2260bdab9d62145) (1.0.1), which
-adds `OpenCharacterEditor`.
+[`14a88af`](https://github.com/WHIPFX/whip_core/tree/14a88af5bd2a1f24b3cf25a1e14fb5de3f940755) (v1.1.0, 2026-11-16).
+Changes from 1.0.1 to 1.1.0 that touch the API are folded into the references: `at.aimModels` and the 100 ms
+`canInteract` display check (interactions.md), containers opened from their prop's edge (stores-containers-panels.md),
+Restore Player Cores (server-ops-devtools.md).
 
 | Repository | What | Pinned commit |
 |---|---|---|
@@ -41,7 +43,7 @@ adds `OpenCharacterEditor`.
 | [whip_dealership](https://github.com/WHIPFX/whip_dealership) | dealership | [`9fcb0c8`](https://github.com/WHIPFX/whip_dealership/tree/9fcb0c8eddb88b534d97a10add19304bc25e82b0) |
 | [whip_fuel](https://github.com/WHIPFX/whip_fuel) | fuel, pumps, jerry can | [`4c940a4`](https://github.com/WHIPFX/whip_fuel/tree/4c940a47cb7ff9d11c85a7510af10524f7acc93e) |
 | [whip_graphics](https://github.com/WHIPFX/whip_graphics) | lighting, sky, LED streetlights | [`a12217d`](https://github.com/WHIPFX/whip_graphics/tree/a12217dd7db47788b4c99c0e0c345458d3158b32) |
-| [whip_gunny](https://github.com/WHIPFX/whip_gunny) | weapons | [`759bb7f`](https://github.com/WHIPFX/whip_gunny/tree/759bb7f75554334a7da3e6a0fcc74a23e887aa07) |
+| [whip_gunny](https://github.com/WHIPFX/whip_gunny) | weapons | [`ec3a1c1`](https://github.com/WHIPFX/whip_gunny/tree/ec3a1c18b5369747f7553dd1963bf0d2dec85336) (v2.0.1) |
 | [whip_homes_mirrorpark](https://github.com/WHIPFX/whip_homes_mirrorpark) | Mirror Park homes (interior themes provider) | [`e3c1180`](https://github.com/WHIPFX/whip_homes_mirrorpark/tree/e3c118017fe9641059fed109b8a6a08a1c675493) |
 | [whip_loadingscreen](https://github.com/WHIPFX/whip_loadingscreen) | loading screen | [`c9c312d`](https://github.com/WHIPFX/whip_loadingscreen/tree/c9c312d1427afd3439cba14d2c95435e77ce7e78) |
 | [whip_media_clothing_female](https://github.com/WHIPFX/whip_media_clothing_female) | media pack (pictures/videos) | [`978c3f3`](https://github.com/WHIPFX/whip_media_clothing_female/tree/978c3f36a64393c8f0a88eadb312dbb97bf66509) |
