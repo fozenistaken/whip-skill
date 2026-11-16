@@ -55,6 +55,7 @@ references/
 scripts/
   whip_scan.py                   port finder (--mode port, --plan) and WHIP-way reviewer (--mode review);
                                  flags invented exports, events and option keys (W070-W072)
+                                 and files whose blocks don't balance, so they won't load (W005)
   whip_names.py                  regenerates references/whip-names.json from whip_core
   check_update.py                is a newer version of this skill on GitHub? (reads only)
   whip_host.py                   server setup step 1 (scan the machine) and install check

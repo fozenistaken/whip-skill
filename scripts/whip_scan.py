@@ -318,6 +318,33 @@ def line_of(text, pos):
     return text.count('\n', 0, pos) + 1
 
 
+_BLOCK_TOK = re.compile(r'--\[(=*)\[.*?\]\1\]|--[^\n]*|\[(=*)\[.*?\]\2\]|"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\''
+                        r'|\b(function|if|do|repeat|end|until)\b', re.S)
+
+
+def block_problem(text):
+    """W005: do Lua's blocks balance? Openers (function, if, do, repeat) against closers (end, until), outside strings
+    and comments. Returns None, or (line, what is wrong). Not a parser: a stray or missing `end` is what it catches."""
+    stack = []
+    for m in _BLOCK_TOK.finditer(text):
+        w = m.group(3)
+        if not w:
+            continue
+        line = line_of(text, m.start())
+        if w in ('function', 'if', 'do', 'repeat'):
+            stack.append((w, line))
+        elif not stack:
+            return line, f'`{w}` closes a block that was never opened'
+        else:
+            opener, _ = stack.pop()
+            if (w == 'until') != (opener == 'repeat'):
+                return line, f'`{w}` closes a `{opener}` block'
+    if stack:
+        w, line = stack[-1]
+        return line, f'this `{w}` is never closed'
+    return None
+
+
 class Scan:
     def __init__(self, root, mode, min_sev):
         self.root, self.mode, self.min = root, mode, SEVERITIES.index(min_sev)
@@ -359,6 +386,13 @@ class Scan:
             for p in files:
                 if p.endswith('.lua'):
                     texts[p] = open(p, encoding='utf-8', errors='ignore').read()
+            for p, raw in texts.items():   # W005 first: a file that does not load makes every other finding moot
+                bad = block_problem(raw)
+                if bad:
+                    self.add('W005', 'HIGH', os.path.relpath(p, self.root), bad[0],
+                             f'Lua blocks do not balance: {bad[1]}. The file will not load',
+                             'Find the stray or missing `end`/`until` near that line (removing a function often leaves its `end`)',
+                             'core-concepts.md')
             uses_whip = ('whip_core' in manifest) or any('exports.whip_core' in t or 'Whip.' in t for t in texts.values())
             if name.startswith('whip_') and name in ('whip_core',):
                 continue  # the framework itself
