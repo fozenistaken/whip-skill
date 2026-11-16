@@ -294,6 +294,30 @@ CreateThread(function()
 end)
 ```
 
+### PlacePoint(opts?) — CLIENT, WAITS (whip_core 1.2.0+)
+A point (position and heading) placed with the Object Viewer's markers, for a spot rather than a prop: a see-through
+ghost appears where the camera looks; the player drags the centre dot over the world, the arrows along X / Y / Z,
+and the ring to turn it (R swaps). Place (A on a pad) takes it; Esc (B) leaves it. Source `client/place_point.lua`.
+
+| opts | Meaning |
+|---|---|
+| `at` | `{ x, y, z, w? }`: start from this point, its heading kept (left out: on the surface looked at, facing the player) |
+| `model` | the ghost: a prop, or a ped with `ped = true` (it stands and turns); default a small marker |
+| `ped` | `true` when `model` is a ped |
+| `label` | the bar's name for it |
+
+- Returns `{ x, y, z, w }` (`w` = heading), or `false, why`: `'cancelled'`, `'busy'` (already placing, or the Object
+  Viewer is moving something), `'model'` (not in the game files).
+- The settings page uses it: a `vec3`/`vec4` entry with `place = true` or `place = { model, ped }` gets a Place
+  button (server-ops-devtools.md, setting entry fields).
+- The answer is the player's word: check it on the server (staff only, allowed area).
+```lua
+CreateThread(function()
+    local spot = Whip.core:PlacePoint({ model = 's_f_y_shop_mid', ped = true, label = 'Shopkeeper' })
+    if spot then TriggerServerEvent('mystore:server:clerk', spot.x, spot.y, spot.z, spot.w) end
+end)
+```
+
 ---
 
 ## On-screen text

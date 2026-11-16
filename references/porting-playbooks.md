@@ -87,7 +87,7 @@ Do not edit the user's files when they only asked how a port would work.
   inventory-items.md) and a use handler (`AddStat` hunger/thirst, amounts as item `settings` so admins tune them).
   WHIP then does the keeper, prompt, shelf screen, basket, checkout and shop talk. To know what someone paid (a
   refund), listen to `whip_core:shop:purchased`.
-- **Trap (whip_core 1.0.1):** do NOT pass `settings` to `EnsureShop` for a NEW shop. `Shops.ensureShop`
+- **Trap (whip_core 1.0.1, still in 1.2.0):** do NOT pass `settings` to `EnsureShop` for a NEW shop. `Shops.ensureShop`
   (`server/shops.lua:1745-1746`) puts `settings.ensured = { decl = d }` into the declared settings table itself, so
   it contains itself and the save fails: `SCRIPT ERROR: maximum table nesting depth exceeded`, then
   `An error occurred while calling export EnsureShop`. Declare the shop without `settings`, then set the shelf
@@ -300,12 +300,15 @@ Jobs anyone may do (no boss hires them), with a lent vehicle, offers and stops. 
 
 ## Playbook: clothing, barber, tattoo shops
 - **WHIP owns:** the appearance editor (character creator), saved outfits and tattoos.
-- **Rebuild:** the shop is a prompt (`AddAction`) and a price; take the money first (`ChargePlayer`), then
-  `OpenCharacterEditor(source)` (whip_core 1.0.1+, server). It opens WHIP's own editor on the player, as
-  `/charedit` does: Save keeps the look, Cancel restores the old one. Refund if it returns `false, why`.
-- **Limits** (`server/events_misc.lua` `OpenCharacterEditorFor`): it is the full editor (face and hair too, no
-  clothes-only or barber-only mode); no event tells the resource whether the player saved or cancelled, so a
-  cancel after paying is not refunded; refused when offline, still in the creator, or down. `SanitizeAppearance`
+- **Rebuild (whip_core 1.2.0+):** the shop is a prompt (`AddAction`) whose client handler calls
+  `EditAppearance({ only = <the shop's tabs>, prices, methods = { 'cash', 'bank' }, wallet, onSave })`. The editor
+  shows only those tabs and the price of what changed. `onSave(look, method)` calls the shop's `SecureCallback`,
+  which recounts with `GetAppearanceChanges(source, look, only)`, charges with `ChargePlayer`, keeps it with
+  `SetPlayerAppearance(source, look, { only })` and refunds if that fails. Pay only on Save; Cancel costs nothing.
+  Full example in players-stats-hud.md (The character editor as a store). Tabs: clothes = `'apparel'` + `'props'`,
+  barber = `hair beard eyebrows makeup`, tattoo parlour = `'tattoos'`.
+- **Before 1.2.0:** only `OpenCharacterEditor(source)` (full editor, face included; charge first; no saved or
+  cancelled event, so a cancel after paying is not refunded). Surgeons still use it. `SanitizeAppearance`
   validates an appearance table if the shop stores its own looks.
 
 ## Playbook: licences, IDs, documents
@@ -409,8 +412,10 @@ The scanner's port pass found 88 points. The largest groups were 27 callbacks, 1
 1. **Floating logins.** WHIP saves the live ped position at logout, so a player in a shell is saved in the air.
    Set a player flag on entry; on `whip_core:player:loaded`, restore them to the door or rebuild the shell.
 2. **Spawn picker.** It lists WHIP Properties only; no export was found to add shell homes.
-3. **Wardrobe.** No export opens WHIP's saved-outfit menu. Since whip_core 1.0.1 `OpenCharacterEditor(source)` opens the
-   full character editor (outfits included), so the wardrobe furniture can call that; there is no outfits-only view.
+3. **Wardrobe.** No export opens WHIP's saved-outfit menu alone. Since whip_core 1.2.0 the wardrobe furniture calls
+   `EditAppearance({ only = { 'outfits', 'apparel', 'props' }, onSave = ... })` with no prices (free); its server
+   keeps the look with `SetPlayerAppearance(source, look, { only = { 'apparel', 'props' } })`. The outfits tab only
+   puts a saved outfit on; what is kept is the clothes and props (`server/appearance_store.lua` has no outfits merge).
 4. **No overdraft.** The "may go negative" rent policy is impossible: bank balances can't go below 0.
 5. **Routing buckets.** WHIP uses `1000 + source` (character select) and `100000 + source` (Director isolation).
    Keep the house range clear of both. Drop held props before a bucket move.

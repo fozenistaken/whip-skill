@@ -299,7 +299,11 @@ Marks a garaged car `out` and sets its lock (locked, unless its own key is in it
 ## Server: ownership and deletion
 
 ### TransferVehicle(vehicle, newOwner, opts?) — SERVER, WAITS
-`newOwner`: server id or `{ charId }`, must be online (`'The new owner must be online'`). `opts.giveKey` (default `true`), `opts.revokeOldKeys` (default `true`). Writes the owner, resyncs both players' lists, fires `whip_core:vehicle:ownerChanged { vehicleId, from, to }`. Errors: `'Session vehicles have no owner'` (use `ClaimVehicle`), `'Already owned by that character'`, `'Invalid character'`, `'Vehicle not found'`. Revoking only empties the seller's pockets while online; stashed/boot/ground/ignition keys still work (use `ChangeVehicleLocks`). If the buyer's pockets are full they get no key and it still returns `true`.
+`newOwner`: server id, or `{ charId = n }` for an online OR offline character (offline since whip_core 1.2.0; before, `'The new owner must be online'`). `opts.giveKey` (default `true`), `opts.revokeOldKeys` (default `true`): both act only on online players. `opts.expectedOwner` (1.2.0+): the owner character id you expect; refused if it changed (`'Vehicle ownership changed'`): pass it when a sale was agreed earlier. Writes the owner, resyncs both players' lists, fires `whip_core:vehicle:ownerChanged { vehicleId, from, to }`. Errors: `'Session vehicles have no owner'` (use `ClaimVehicle`), `'Already owned by that character'`, `'No such character'` (offline id that does not exist or is deleted), `'Vehicle is in custody'`, `'Vehicle is busy'`, `'Invalid character'`, `'Vehicle not found'`. Revoking only empties the seller's pockets while online; stashed/boot/ground/ignition keys still work (use `ChangeVehicleLocks`). If the buyer's pockets are full they get no key and it still returns `true`.
+
+### SetVehicleCustody(ref, held, expectedOwner?) — SERVER, WAITS (whip_core 1.2.0+)
+Holds an OWNED car for the calling resource (impound, police hold, repo). While that resource runs, retrieval, spawning, transfer and deletion are refused for everyone, the holder included (`'Vehicle is in custody'`): release the hold first. Another running resource cannot replace or release it (`'Vehicle is held by another resource'`). A stopped resource's hold is ignored but stays stored (column `reservation`), so it is active again when that resource restarts. Session cars: `'Owned vehicle not found'`. `held` must be a boolean (`'Invalid custody state'`). `expectedOwner`: refuses a changed owner. Returns `true` or `false, why`.
+It only changes the hold: it does not despawn, garage, lock or move the car. Impound: a garage with no position (`CreateGarage`), then `DespawnVehicle(vehicleId, { garage = 'impound', refuseOccupied = true })`, then `SetVehicleCustody(vehicleId, true)`. Release before `RetrieveVehicle` / `SpawnVehicle`. The record carries `reservation` (the holding resource or nil).
 
 ### DeleteVehicle(vehicle) — SERVER
 Owned car: row, boot, glovebox, ignition, entity and queued writes removed in one transaction; contents logged lost on the owner's timeline; refused if contents can't be read or settled (`'Could not read what is in it'`, `'Its trunk could not be saved first'`, `'Could not delete the vehicle'`, `'Vehicle is busy'`). Session car: forgotten (`released` reason `'deleted'`); a street car stays in the world (read its entity first, then `DeleteVehicle` + `DeleteEntity` to make it vanish); a temp car is deleted. Fires `whip_core:vehicle:deleted { vehicleId, ownerCharId, wasOut }` (owned only). Ungated: check permission yourself.
@@ -396,7 +400,7 @@ URL (e.g. `https://cfx-nui-whip_media_previews/img/vehicles/sultan.webp`, or a p
 - A repair must clear it or the next spawn puts it back.
 
 ### ClearVehicleDamage(vehicle) — SERVER
-Forgets the stored damage (clears the five stats; reads paused 2 s so a pre-repair read doesn't restore it). Does not fix the car in the world: the game running it must (e.g. `SetVehicleFixed`). `true` or `false, 'Vehicle not found'`.
+Forgets the stored damage (clears the five stats; reads paused 2 s so a pre-repair read doesn't restore it). Does not fix the car in the world: the game running it must (e.g. `SetVehicleFixed`). `true` or `false, 'Vehicle not found'`. Fires `whip_core:vehicle:damageCleared { vehicleId }` (1.2.0+), so another resource can clear its own damage data (a body-damage script).
 
 ## Vehicle data
 
@@ -761,6 +765,7 @@ Server events, for `AddEventHandler` (local; a client can't send them). Any serv
 | `whip_core:vehicle:lockpicked` | `{ vehicleId, plate, source }` | a player lockpicked a car open |
 | `whip_core:vehicle:entered` | `{ vehicleId, plate, source, seat, previousSeat? }` | player in a seat of a WHIP car; again on seat change (`previousSeat` set) |
 | `whip_core:vehicle:exited` | `{ vehicleId, plate, source, seat, left? }` | left a seat; `left = 'logout'|'dropped'` when leaving the game |
+| `whip_core:vehicle:damageCleared` | `{ vehicleId }` | WHIP cleared a car's recorded damage for a repair (`ClearVehicleDamage`, 1.2.0+); does not repair the entity |
 
 `released` reasons: `'expired'` (despawnAfter), `'idle'`, `'gone'` (entity already gone), `'stopped'` (owning resource stopped), `'despawned'`, `'deleted'`, `'released'` (ReleaseTag), `'failed'` (SpawnTempVehicle key failed), plus `'claimed'` and `'not adopted'` in code.
 

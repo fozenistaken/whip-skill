@@ -497,6 +497,12 @@ Count across pockets. `filter`: `function(metadata) → bool`; a number/string/b
 ### GetHeldItem() — CLIENT
 `{ item, pocket, slot }` (copy) or nil, as the server last said. No metadata (use the server's). For a prompt, `require = { held = 'jerry_can' }` is cheaper.
 
+### SetInventoryLocked(locked) — CLIENT (whip_core 1.2.0+)
+Blocks the inventory screen for your resource (`true`; also closes it if open) or releases YOUR lock (`false`; other
+resources' locks and the database lock still apply). Cleared when your resource stops. A client UI lock only: it is
+not server authorisation for inventory writes. Returns `false` for a non-boolean or without a calling resource.
+Use: a minigame, a cutscene, a handcuffed state your resource owns.
+
 ### IsInventoryOpen() — CLIENT
 Whether the plain inventory screen is open. For "is the player busy", use `IsGameInputFree`.
 

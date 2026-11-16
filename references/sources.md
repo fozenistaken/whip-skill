@@ -26,10 +26,17 @@ Use this file when something in the skill does not match what a server does: a r
 
 Snapshot of 2026-11-14/15. `main` may be newer: compare before trusting a detail. Line citations use the
 pinned commits below; `export-index.md` and `whip-names.json` were regenerated from whip_core
-[`14a88af`](https://github.com/WHIPFX/whip_core/tree/14a88af5bd2a1f24b3cf25a1e14fb5de3f940755) (v1.1.0, 2026-11-16).
+[`59a9cd4`](https://github.com/WHIPFX/whip_core/tree/59a9cd4) (v1.2.0, 2026-11-16).
 Changes from 1.0.1 to 1.1.0 that touch the API are folded into the references: `at.aimModels` and the 100 ms
 `canInteract` display check (interactions.md), containers opened from their prop's edge (stores-containers-panels.md),
 Restore Player Cores (server-ops-devtools.md).
+Changes from 1.1.0 to 1.2.0 that touch the API: the character editor as a store (`EditAppearance`,
+`GetAppearanceChanges`, `SetPlayerAppearance`) and `RenameCharacter` (players-stats-hud.md, porting-playbooks.md);
+`OpenShop` and virtual shops (jobs-shops-properties-doors.md); `SetVehicleCustody`, `TransferVehicle` to an offline
+character with `expectedOwner`, `whip_core:vehicle:damageCleared` (vehicles-garages.md, events-and-data.md);
+`SetInventoryLocked` (inventory-items.md); `StoreTake`'s metadata filter (stores-containers-panels.md); `PlacePoint`
+and the settings page's `place` (ui-nui-camera.md, server-ops-devtools.md); furnisher multi-select. 1.1.1 dropped the
+Enhanced NPC netId warning (world-zones-time-npcs.md).
 
 | Repository | What | Pinned commit |
 |---|---|---|

@@ -263,6 +263,9 @@
   "DropOwnHeldProp": [
    "client"
   ],
+  "EditAppearance": [
+   "client"
+  ],
   "EndConversation": [
    "server"
   ],
@@ -328,6 +331,9 @@
    "client"
   ],
   "GetActiveTheme": [
+   "server"
+  ],
+  "GetAppearanceChanges": [
    "server"
   ],
   "GetBalance": [
@@ -1080,6 +1086,9 @@
   "OpenPlayerInventory": [
    "server"
   ],
+  "OpenShop": [
+   "server"
+  ],
   "OpenStore": [
    "server"
   ],
@@ -1096,6 +1105,9 @@
    "client"
   ],
   "PlaceObject": [
+   "client"
+  ],
+  "PlacePoint": [
    "client"
   ],
   "PlayCamera": [
@@ -1276,6 +1288,9 @@
   "RemoveZoneGroup": [
    "client"
   ],
+  "RenameCharacter": [
+   "server"
+  ],
   "ReportVehicleStat": [
    "client"
   ],
@@ -1345,6 +1360,9 @@
   "SetHeldItem": [
    "server"
   ],
+  "SetInventoryLocked": [
+   "client"
+  ],
   "SetItemMetadata": [
    "server"
   ],
@@ -1356,6 +1374,9 @@
   ],
   "SetPadActionReady": [
    "client"
+  ],
+  "SetPlayerAppearance": [
+   "server"
   ],
   "SetPlayerFlag": [
    "server"
@@ -1415,6 +1436,9 @@
    "server"
   ],
   "SetVehicleAppearance": [
+   "server"
+  ],
+  "SetVehicleCustody": [
    "server"
   ],
   "SetVehicleData": [
@@ -2344,13 +2368,22 @@
   "whip_core:time:freezeChanged",
   "whip_core:ui:cleanScreen",
   "whip_core:ui:stateChanged",
+  "whip_core:vehicle:claimed",
   "whip_core:vehicle:copied",
+  "whip_core:vehicle:created",
+  "whip_core:vehicle:damageCleared",
   "whip_core:vehicle:dataChanged",
+  "whip_core:vehicle:deleted",
+  "whip_core:vehicle:despawned",
   "whip_core:vehicle:entered",
   "whip_core:vehicle:exited",
   "whip_core:vehicle:lockChanged",
   "whip_core:vehicle:lockpicked",
+  "whip_core:vehicle:ownerChanged",
+  "whip_core:vehicle:plateChanged",
+  "whip_core:vehicle:registered",
   "whip_core:vehicle:released",
+  "whip_core:vehicle:spawned",
   "whip_core:vm:clearClassStorage",
   "whip_core:vm:clearModelStorage",
   "whip_core:vm:modelStorage",

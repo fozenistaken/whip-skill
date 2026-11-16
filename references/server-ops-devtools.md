@@ -226,7 +226,7 @@ Arrow keys move, Enter toggles, Esc closes; a tool stays on until switched off (
 | Entry | Does |
 |---|---|
 | Developer mode | The switch; while off it is the only row |
-| Noclip | Fly, invisible, invincible: WASD, Space/Ctrl, Shift faster |
+| Noclip | Fly, invisible, invincible: WASD, Space/Ctrl, Shift faster. In a vehicle, the vehicle comes along (1.1.0+) |
 | Invisible | Nobody sees you; you see yourself at half opacity |
 | God Mode | No damage, health kept full |
 | Restore Player Cores | Once: revive if down (as `/whip_revive`), then fill health, armour, hunger and thirst (1.1.0; was Restore Health & Armour) |
@@ -608,6 +608,7 @@ Used by `Whip.configPage` entries and items' own `settings`.
 | `sides` | string | `'both'` (default) or `'server'` (never sent to players; admins still see it) |
 | `cross` | `function(get)` | Server-side when this setting is in a save; `get(key)` = value as it will be saved. Return `true` or `false, 'why'`. Put it on both entries of a two-setting rule |
 | `here` / `limits` / `axisLabels` | bool / table / table | vec3/vec4: "Use where I stand"; `{ x = { min, max }, ... }` |
+| `place` | bool / table | vec3/vec4 (whip_core 1.2.0+): a Place button; the panel steps aside and the point is placed in the world with `PlacePoint` (ui-nui-camera.md). `{ model = 's_f_y_shop_mid', ped = true }` picks the ghost. Comes back as an edit waiting for Apply. An empty optional position reads 'none' |
 | `item` | table | list: entry shape without key; must be `int`, `number`, `string` or `enum` (edited as one comma-separated line). For positions use `records` with a `vec3` field |
 | `fields` | table | records / map rows / record: field entries with `key` (`'permissions.canHire'` may reach inside the row); fields not listed are kept as-is. A `record` field cannot itself be a `record` |
 | `widget` / `marker` | string / table | `widget = 'mapPoints'`: records with a vec3 and a string field shown as draggable map icons; `marker = { sprite = 361, colour = 1, name = 'Gas Station' }` |

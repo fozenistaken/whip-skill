@@ -199,6 +199,69 @@ Runs the creator's validator: whitelist-copy, clamp indexes, reject structural e
 
 ### OpenCharacterEditor(who) — SERVER (whip_core 1.0.1+)
 Opens WHIP's character editor on the player's own character, as `/charedit` does: Save keeps the new look, Cancel puts the old one back. `who` = server id or `{ charId = n }` (online). Returns `true` or `false, why`: `'That character is not online'`, `'They are still making their character'`, `'They are down'` (plus `WhoIs` errors). The player's game also refuses silently while the editor is already open, so `true` means "sent", not "opened". Full editor only (face, hair, clothes, tattoos); no save/cancel event comes back. Charge first, then open. Source: `server/events_misc.lua` `OpenCharacterEditorFor`, `client/appearance.lua` `OpenCharacterEditor`.
+A surgeon (whole editor, paid up front) uses this. A store that sells only some parts uses `EditAppearance` (below).
+
+### The character editor as a store (whip_core 1.2.0+)
+For a clothes shop, barber or tattoo parlour: the player edits their own look on only the store's tabs, sees the
+price of what changed, and the store's server counts, charges and keeps it. Source: `client/appearance.lua`
+`EditAppearance`, `server/appearance_store.lua`, `html/js/creator-store.js` (the editor's price).
+
+Tab names for `only` and `prices` (category ids, creator-data.js): face group `heritage features eyes hair eyebrows
+beard makeup skin chestHair`; apparel group `mask tops undershirt arms legs shoes accessory armor decal bag`; props
+group `hat glasses ear watch bracelet`; tattoos group `tatHead tatTorso tatLeftArm tatRightArm tatLeftLeg
+tatRightLeg`; and `outfits`. Groups: `'face'`, `'apparel'`, `'props'`, `'tattoos'`, `'outfits'`.
+
+#### EditAppearance(opts) — CLIENT, WAITS (the fade; call from a thread)
+- `only`: the tabs offered (ids or groups); left out, all of them.
+- `prices`: dollars each, looked up by category id, then group, then `default` (`{ apparel = 50, hat = 20 }`).
+  `tattoos` is per tattoo put on. This is the price SHOWN; the server must recount (below).
+- `methods`: `{ 'cash', 'bank' }` opens a checkout first (total, one tile per way to pay); one method skips the
+  checkout. `wallet = { cash = n, bank = n }` is shown on the tiles and greys out one that cannot cover the total:
+  read it on your server (`GetPlayerCash`, `GetBalance`).
+- `title`, `sub`: the editor's heading.
+- `onSave(look, method)` (required, may wait): charge and keep it on the server, return `true` or `false, why`
+  (shown on Save, max 60 characters; the editor stays open). `method` is the tile chosen or nil.
+- `onClose(saved)`: the editor shut, saved or not (Cancel, a death, a logout). Cancel puts the old look back.
+- Returns `true` or `false, why`: `'onSave is required'`, `'No character loaded'`, `'The character editor is
+  already open'`, `'Not while dead'`, `'Get out of the vehicle first'`, `'Put your weapon away first'`.
+
+#### GetAppearanceChanges(who, look, only?) — SERVER
+What changed between the character's SAVED look and `look`: `{ [categoryId] = count, tattoos? = n }`. One per
+category changed; `makeup` counts each of its three overlays; `tattoos` per tattoo added. Taking off an accessory or
+a tattoo counts nothing. `who` = server id or `{ charId = n }`, playing. Refusals: `'That character is not playing'`,
+`'That character has no look saved yet'`, `'That look is too big'` (over 10,000 bytes of JSON), `'That look is not
+valid: <why>'`, `'That look is another body'` (model changed), or a bad `only`.
+
+#### SetPlayerAppearance(who, look, opts?) — SERVER
+Keeps a look, checked as the editor's Save is (`SanitizeAppearanceData`). `opts.only` takes only those tabs' parts
+from `look` and keeps the rest of the saved look, so a barber cannot change a face: always pass `only`. Saves the
+player row. The worn look changes with the editor's Save (EditAppearance); called on its own, at their next load.
+Returns `true, keptLook` or `false, why` (same refusals as above).
+
+```lua
+-- server: the client sends only the look and the tile; the price is counted here
+SecureCallback('mybarber:buy', { rateLimit = 2000, params = { { 'look', 'any' },
+        { 'method', 'enum', { 'cash', 'bank' }, 'cash' } } }, function(source, player, look, method)
+    local only = { 'hair', 'beard', 'eyebrows' }
+    local changes, why = exports.whip_core:GetAppearanceChanges(source, look, only)
+    if not changes then return false, why end
+    local total = 0
+    for id, n in pairs(changes) do total = total + (id == 'hair' and 40 or 15) * n end
+    local receipt, err = exports.whip_core:ChargePlayer(source, total, { method = method, reason = 'Haircut' })
+    if not receipt then return false, err end
+    local ok, kept = exports.whip_core:SetPlayerAppearance(source, look, { only = only })
+    if not ok then exports.whip_core:RefundPlayer(receipt) return false, kept end
+    return true
+end)
+```
+`look` is `'any'` because GetAppearanceChanges checks it (size cap, sanitiser, same body). Add `near` to the callback for a store tied to a place (security.md). Keep the client's `prices` and the server's
+sums the same, or Save shows one price and charges another.
+
+### RenameCharacter(who, firstName, lastName) — SERVER, WAITS (whip_core 1.2.0+)
+Renames an online or offline character; charId and everything owned by it stay. The editor's name rules: letters,
+spaces and hyphens, at least two letters and at most 30 characters per name. An online player gets the new name at
+once; fires `whip_core:character:renamed`. Returns `true, fullName, oldName` or `false, reason`. It grants nothing:
+check permission in your own handler before calling (a deed-poll office, an admin tool).
 
 ## Client exports: local player, body, walk, emotes, voice
 

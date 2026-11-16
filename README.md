@@ -82,7 +82,7 @@ python -I scripts/selftest/run.py
 ## Sources and currency
 
 Built from https://whipfx.net/docs/ and every https://github.com/WHIPFX repository as of 2026-11-15 (whip_core
-commit `d12235f`), with facts checked against the source code. `references/sources.md` links every repository at
+commit `d12235f`, checked again against v1.2.0), with facts checked against the source code. `references/sources.md` links every repository at
 the exact commit used, explains how to open any `repo/path:line` citation on GitHub, and lists every docs anchor. Where docs and code differ, the references say so ("Docs vs code").
 WHIP's code is LGPL-3.0. The example resources under `assets/examples` are MIT and unchanged. The starter
 template is original. Regenerate `export-index.md` after a WHIP update.

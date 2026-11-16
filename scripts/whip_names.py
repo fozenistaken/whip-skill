@@ -135,7 +135,10 @@ def main():
     # Event names built from a prefix in code (WhipEmit('whip_core:door:' .. kind)): keep the prefixes too
     prefixes = set()
     for p in glob.glob(os.path.join(core, '**', '*.lua'), recursive=True):
-        prefixes.update(re.findall(r"['\"](whip_core:[a-zA-Z]+:)['\"]\s*\.\.", open(p, encoding='utf-8', errors='ignore').read()))
+        src = open(p, encoding='utf-8', errors='ignore').read()
+        prefixes.update(re.findall(r"['\"](whip_core:[a-zA-Z]+:)['\"]\s*\.\.", src))
+        # Vehicles.announce('spawned', ...) fires whip_core:vehicle:spawned (server/vehicles.lua)
+        events.update('whip_core:vehicle:' + k for k in re.findall(r"Vehicles\.announce\(\s*['\"](\w+)['\"]", src))
 
     classes = stub_classes([os.path.join(t, f) for f in ('classes.lua', 'server.lua', 'client.lua')])
     spec = os.path.join(core, 'shared', 'interact_spec.lua')

@@ -130,7 +130,9 @@ exports.whip_core:StoreGive({ kind = 'vehicle', id = vanId, sub = 'trunk' }, 'de
 ### StoreTake(addr, amount?, opts?) — SERVER, WAITS
 - With a slot: from that slot; `amount` nil = the whole stack. Errors: `'Empty slot'`, `'Not enough items'`, `'Invalid amount'`, `'Invalid slot'`.
 - Without a slot: `opts.item` required (`'name the slot in the address, or the item in opts.item'`); `amount` default 1; counted first, so a short store changes nothing: `'Not enough drink there (3 of 5)'` (held of wanted). Taken from the last slots first. If a custom kind refuses a write mid-way, what came out is put back: `'Could not take all of the <item> (the store refused a write)'`.
-- `opts`: `{ item?, reason? }` or a plain reason string.
+- `opts`: `{ item?, metadata?, reason? }` or a plain reason string. `metadata` (whip_core 1.2.0+) is a recursive partial
+  match: the stack must carry every key given with that value; extra keys are allowed. `item` and `metadata` filter a
+  given slot too: `{ item = 'drink', metadata = { quality = 'fresh' } }`.
 - Frozen unit (bank payment hold): `'Paying — wait a moment'`.
 - Returns `{ item, amount, metadata }` (metadata only when taken from one slot), or `false, reason`. The items are destroyed (logged 'lost'); to relocate use StoreMove.
 

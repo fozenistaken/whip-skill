@@ -506,7 +506,7 @@ From `server/actors.lua` (Director car tasks). Whose game drives a car now: the 
 12. `SetTime(25, 61)` gives 01:01 (no carry), not 02:01.
 13. `frozen = false` in a layer is an override, not "unset"; don't build layer tables with `cond and v or nil`.
 14. NPC `weapon` must be a `WEAPON_*` name; `hostileTo` can never be `'everyone'`; `except` requires a `range`.
-15. On FiveM Enhanced, make NPCs after `whip_core:player:loaded`: one made with nobody in the game can have its netId reused later (console warning).
+15. On FiveM Enhanced before cfx-server b177, an NPC made with nobody in the game could have its netId reused later. Cfx patched it; whip_core 1.1.1 dropped the warning (`e228a2d`). Making NPCs after `whip_core:player:loaded` still costs nothing.
 16. `follow = false` alone makes the NPC walk back to its post; give a new `post` if you want it to stay.
 17. NPC events can be fired by any resource: verify with `GetNpc` (owner, alive, killer) before rewarding.
 18. A blip `radius` with no label/route gets no dot (sprite 0) and so no name or route.

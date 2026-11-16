@@ -13,6 +13,7 @@ Jobs (roles, duty, business account), shops (npc / infinite / stocked), properti
 - Shops: config and the shop record
 - Shops: server exports
 - Shops: client exports
+- Shops: opening from your own resource, virtual shops (whip_core 1.2.0+)
 - Shops: the shopping flow (server internals)
 - Shops: stock management and shelf layout
 - Shops: events and shop talk
@@ -316,7 +317,44 @@ exports.whip_core:SetShopItemPrice({ shopId = shopId }, 'drink', 5, true)
 - **IsShopOpen() — CLIENT**: shop screen open.
 - **GetActiveShopId() — CLIENT**: shopId being browsed or `nil` (global `ActiveShopId`).
 
-There is no client event or export to open a shop: it opens only through the counter prompt (server `Shops.openFor`), a Systems card, or whip_test's seam.
+There is no client event or export to open a shop. Before 1.2.0 it opened only through the counter prompt (server
+`Shops.openFor`), a Systems card, or whip_test's seam. Since 1.2.0 a resource opens its own shop from the server with
+`OpenShop` (below).
+
+## Shops: opening from your own resource, virtual shops (whip_core 1.2.0+)
+
+### OpenShop(source, ref, opts?) — SERVER, WAITS
+Opens a shop the CALLING resource declared, for a living, loaded player (`server/events_misc.lua`). Another
+resource's shop: `false, 'Shop belongs to another resource'`.
+- `ref`: shop id, `{ id = n }`, `{ key = 'my_shop' }` or `{ containerId = n }`.
+- `opts.range`: metres, default 3, greater than 0 and at most 20 (`'range must be between 0 and 20'`).
+- `opts.authorize(source)`: your server check; must return exactly `true` (`'Not allowed'`). It runs again on every
+  range check during the session, so access ends the moment it returns anything else.
+- Returns `true` or `false, why`: `'Player not available'` (offline, down, leaving), `'Shop not found'`,
+  `'Too far away'` (a physical shop measured from its x/y/z).
+- Purchases keep the shop's normal stock, payment and access checks. Access also ends when the session changes or
+  the opening resource stops.
+- Validate who may open it in your own SecureEvent handler (`near`, job, item) before calling.
+
+```lua
+SecureEvent('mymarket:server:browse', { rateLimit = 1000, params = {} }, function(source, player)
+    local ok, why = exports.whip_core:OpenShop(source, { key = 'mymarket_stall' }, {
+        range = 3, authorize = function(src) return exports.whip_core:HasItem(src, 'mymarket_card') end })
+    if not ok then exports.whip_core:NotifyPlayer(source, why, 'error') end
+end)
+```
+
+### Virtual shops
+`settings.virtual = true` (EnsureShop, CreateShop, UpdateShop) makes a shop your resource opens itself: WHIP spawns
+no keeper, prop, counter prompt or blip for it (`Shops.wireOne` drops `npcModel`, `prop`, `blipSprite`), and only
+`OpenShop` opens it. It still needs x/y/z in the declaration and uses the same catalog, stock and payment rules. The
+session anchors at the player's position when it opened; walking more than `range` away ends access.
+
+**Trap, still in 1.2.0:** a NEW `EnsureShop` with `settings` fails (`maximum table nesting depth exceeded`, see
+porting-playbooks.md, EnsureShop trap). For a new virtual shop: `EnsureShop` without settings, then, when
+`shop.settings.virtual` is unset, `UpdateShop(shop.shopId, { settings = s })` where `s` is a COPY of `shop.settings`
+with `virtual = true` added. UpdateShop replaces the whole settings table (`server/shops.lua:1332`), so passing only
+`{ virtual = true }` drops `settings.ensured` and the shelf layout.
 
 ## Shops: the shopping flow (server internals)
 
@@ -461,6 +499,7 @@ Internal/test exports (do not use): `__GetPropertyObjectCount`, `__GetPropertyOb
 
 ## Properties: furniture and the prop catalogue
 
+- Furnisher (whip_core 1.2.0+): several pieces can be selected anywhere (Ctrl+click, or drag a box, up to 150 m; a click when the box is empty), moved together, with a grid lock; Move starts unsnapped.
 - Rows stored in the interior's own space (`property_objects`: model, lx/ly/lz, rx/ry/rz, containerId), spawned per client, non-networked; fetched when the property streams in (`whip_core:property:objects`, only within stream range + anchor radius + 40 m).
 - **Who furnishes**: the OWNER (at the property) or a `/whip` admin (anywhere). One furnisher per property (lock; `'<name> is furnishing this property right now — try again when they are done'`); lost when the holder leaves the property, logs out, or the property closes/goes. `/furnish` command (client), `whip_furnish_exit`.
 - **Save rules** (`PropertyObjects.replace`): property active; based on the current version (`'This room changed since you opened the furnisher (someone else saved it) — close it and open it again'`); space set up; count <= maxObjects (`'That is %d objects — the limit here is %d'`); every new model placeable (an existing unavailable model may stay but not be added); every position inside the space with 0.3 m slack (`'"model" is outside the property'`). Save rate 1 per 4000 ms.
