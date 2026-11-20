@@ -70,7 +70,14 @@ Covers the txAdmin recipes, the setup report, WHIPFX's oxmysql fork, the five `w
 | bob74_ipl (`Bob74/bob74_ipl`, upstream, not WHIPFX) | 2.7.1 (no `v`) | `./resources/[assets]/bob74_ipl` |
 | oxmysql (WHIPFX fork, release zip) | v2.14.3-whip.1 | unzipped into `./resources/[ox]` |
 
-- `whip_test` is NOT in the recipe (install by hand on a test server only).
+- `whip_test` is NOT in the recipe (install by hand on a test server only). It is WHIP's own regression suite, not a
+  feature. Don't offer it as "missing".
+- whip_homes_mirrorpark v1.0.1 (2026-11-17): floating flags fixed, two-story culling fixed, and the client no longer
+  wakes the garage doors every frame (GTA's own doors work on both platforms; tested 16 Nov 2026). Updating by hand:
+  `git clone --depth 1 --branch v1.0.1`, then swap the whole folder, minus `.git` and `.github`. Don't copy over it in
+  place: its stream files are hardlinked into `server-data/cache/files/<res>/stream_cache`.
+- Find what a server lacks: `gh repo list WHIPFX` (latest release per repo) against each installed `fxmanifest.lua`
+  `version`.
 - chameleon_paint is WildBrick142's work under its own terms, not part of WHIP, "must never be sold"; whip_autos' Chameleon paints need its colour ramps. bob74_ipl is Bob74's (MIT): fills map holes, loads GTA Online interiors. Neither is WHIP code.
 
 ## txAdmin recipes

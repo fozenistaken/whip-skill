@@ -60,6 +60,8 @@ gunny owns the rules and whip_core owns the data, which lives in item metadata.
 | Ammo (`ammo_*`) | none | A stack of loose rounds, `type='ammo'`, `maxStack 999`. |
 | Attachment | its own metadata (uid) | When fitted, it is copied into the gun's `attachmentMeta[slot]` and handed back on removal. Older guns may carry `attachmentUids[slot]`, which comes back as `{ uid }`. |
 
+Telling a gun from the rest (verified 2026-11-18, `server/items.lua`): guns, magazines and throwables all register with `type = 'weapon'`. A gun is the one whose metadata has a `serial` and an `attachments` table; a magazine has `{ serial, ammo }`, melee `{ serial }` only. For a definition-level filter: guns are `stack = false` and carry no `fuelCapacity` (the jerry can), but magazines pass that filter too, so check the metadata in the handler.
+
 - Serial: 12 characters from `A–Z0–9` (`GunnyNewSerial`, `server/main.lua:210`). It is stamped by `RegisterItemDefaultMetadata` for every gun, magazine, melee weapon and jerry can as it is made. A magazine without one gets one as it goes into a gun (`GunnyMagazineIn`).
 - A magazine put into a gun is stored **whole** inside the gun (`meta.magazine`) and comes out exactly as it went in, with the remaining rounds. While it is inside, `FindItemByMetadata('serial', magSerial)` finds nothing, because the search is not nested.
 - Item `type`: guns, melee, throwables, the jerry can, magazines and attachments are `'weapon'`; rounds are `'ammo'`. Guns, magazines and attachments: `stack=false`, `maxStack=1`, `usable=false`.

@@ -36,6 +36,7 @@ The Duo phone (architecture, app/module API, NUI messaging, items, DB, every exp
 - Chat: client events and exports
 - Chat: server exports, hooks and modes
 - Chat: routing and inbound events
+- Chat: whip_chat 1.2.0 (for whip_core 1.3)
 - Chat: suggestions
 - Chat: NUI and message format
 - Loading screen
@@ -294,7 +295,7 @@ Minimal module:
 | `app.close()` / `app.back()` | Home / same as Back. |
 | `app.attention(on = true)` | Raise a put-away phone into view; `false` lets it drop again (unless the player opened it). |
 | `app.ring(kind)` | `'ring'` (SIM ringtone, looping), `'back'` (ringback), `null` (quiet). |
-| `app.fold()` | (code) fold/unfold the Duo. |
+| `app.fold()` | (code) fold/unfold the Duo: a toggle, not "unfold". To open a big app unfolded when it was started from the folded home screen, call it in `mount(app, el, view)` only when `view.size === 'phone'` and `!app.forced` (`RunApp` already opens unfolded). Verified in the preview, 2026-11-20. |
 | `app.contacts` | Shared: `list`, `sorted`, `loaded`, `load()`, `find(number)`, `name(number)`, `save(c)`, `remove(id)`. |
 | `app.blocks` | SIM block list: `list` (`{ number, time }`), `loaded`, `load()`, `has(number)`, `add(number)`, `remove(number)` (reject with `err.reason`). |
 | `app.settings` | `get(key)`/`set(key, value)` for `wallpaper`, `dnd`, `ringtone`, `messageTone`, `notifyTone`, `soundVolume`; `wallpapers()`; `sounds('ringtone'|'alert')`; `preview(kind, id)`; `stopPreview()`; `isConsole()`. `get('layout')` is always `'auto'`. |
@@ -337,8 +338,23 @@ Fields for `app.notify`, server/client `Notify`, and `whip_phone:client:notify` 
 
 ## Phone: mount mode, CSS scoping, fold snapshots
 
+**An app with its own design: use mount mode.** Verified 2026-11-17 in whip_phone's preview (`html/preview.html`).
+- **Render mode inherits the phone's global classes.** A render-mode app that used `.grid`, `.list`, `.row`, `.search`, `.card` or `.btn` got the phone's own rules. On the tablet, `.grid` is the absolutely placed home-screen icon grid. Text stacked one letter per line and blocks overlapped.
+- **The status bar:** the app also drew under the phone's status bar.
+- **The fix:** mount mode, all classes prefixed, content kept inside `var(--safe-top)` / `var(--safe-bottom)`, and fonts declared in `globalCss` (`url()`s resolve against the script).
+- **Sizes:** the displays are fixed logical px (`SIZE`, `core/os.js:13`): phone 390×578, tablet 1024×722, tabletP 722×1024. Design for those.
+- **Previewing an external app:** copy `html/` into a scratch folder and serve it. In `dev/mock.js`, add the module next to `EXAMPLE` with its `ns` and answer its `<ns>:<action>` names in `handlers`. Then open `preview.html?modules=phone,<id>`, call `whipPhone.open('tablet')`, unlock, and call `whipPhone.os.openApp('<id>')`.
+- **The preview lags:** the 3D phone repaints a moment after a DOM change, so wait about 2 s before a screenshot.
+- **Preview-only traps** (verified 2026-11-17):
+  - `preview.html` has an unscoped `.right { margin-left:auto; display:flex; align-items:center }` that reaches into mount roots. Never name a class `right`; prefix every class.
+  - In the preview, Q/E/X/C are dev keys (C opens the Control Centre, `DEV_KEYS`, `core/main.js:16`). In game only arrows, Enter, Esc, Backspace and Home drive the phone, and every key also reaches GTA (`SetNuiFocusKeepInput`).
+- **Mount roots are not shadow DOM.** The app draws into `.mount-root`; the phone's own CSS is shielded from it with `:where(:not(.mount-root *))` (`core/scope.js:90-127`), and the module's `css` is prefixed with `:where(.m-<id>)`. A `<style>` the app adds itself is global.
+- **Sharing a script between a phone app and your own NUI page:** the phone loads only the one `script`. Register at once (else the console warns the script "never called WhipPhone.module"), load the shared file with a `<script>` built from `new URL('../shared/x.js', document.currentScript.src)`, and in its `onload` call `WhipPhone.module` again with the full `css`/`globalCss` (registering an id again replaces it, `core/os.js:280`). Cross-resource `<script>` and `<img>` load; `fetch` may not. Verified 2026-11-17.
+- **Fonts in the fold picture:** the fold snapshot inlines only the CSS the phone knows (module `css` + `globalCss`), so declare `@font-face` in `globalCss` with absolute URLs.
+- **Unfolding:** the player clicks the battery and signal icons (top right) to open the Control Centre, then "Unfold to tablet" (`core/os.js:1002`, `1212`); a controller uses Y. `RunApp` opens straight into the tablet.
+
 Mount mode (`mount` instead of `render`):
-- `mount(app, el, view)` on open (`el` empty, covers the display; may be async). `update(app, el, view, changed)` after every phone render; `changed = true` when the box moved display (fold/unfold) or layout switched. `unmount(app, el)` on close or removal.
+- `mount(app, el, view)` on open (`el` empty, covers the display; may be async). `update(app, el, view, changed)` after every phone render; `changed = true` when the box moved display (fold/unfold) or layout switched. Anything a module measures from layout (a sliding tab highlight) must be measured again then; a `ResizeObserver` on the module root catches every case (2026-11-18: the court app's highlight stayed at phone size after unfolding). A light app sets `statusBar: 'dark'` (`core/os.js:986`). `unmount(app, el)` on close or removal.
 - One live instance: the box moves between displays on fold, so component state survives.
 - The whole display is the app's, under status bar and home bar: keep content inside `var(--safe-top)` / `var(--safe-bottom)` (grows in controller layout).
 - Starts from browser defaults: no phone fonts, resets or kit classes reach in; only CSS variables (`--accent`, `--safe-top`, `--text`, ...) inherit.
@@ -667,6 +683,8 @@ Related whip_core config: `Config.LorePictureLinks` (`{ 'https://r2.fivemanage.c
 
 - `whip_chat` replaces FiveM's stock `chat`: same events, exports, modes, templates and `^N` colour codes. Requires `whip_core`. `ensure whip_chat` after whip_core; remove `ensure chat` (or `stop chat` after `ensure whip_chat`). Two chats → every line twice, T opens both; whip_chat prints a red console warning (and F8 warning) naming the other chat and the fix. "Another chat" = resource named `chat` or any with `provide 'chat'` metadata.
 - whip_chat does **not** `provide 'chat'`: `exports.chat:...` calls and `dependency 'chat'` must be changed to `whip_chat`. Event-only resources need no change.
+  - FiveM facts, if a resource provides a name (verified in game): `provide` satisfies `dependency 'chat'` but does NOT carry exports. `exports.chat:addMessage` fails with "No such export addMessage in resource chat" unless the provider also answers FiveM's export event `__cfx_export_chat_<name>` (`AddEventHandler(..., function(setCB) setCB(fn) end)`, as oxmysql does for mysql-async).
+  - FiveM lists a provided name as a resource of its own (`GetResourceByFindIndex`), with the provider's state, metadata, version and folder. whip_core 1.2.0's setup report then says "FIX chat is running beside whip_chat" and counts the provider twice.
 - No `config.lua`. fxmanifest: `shared_script '@whip_core/lib/satellite.lua'`, `ui_page 'html/index.html'`, `nui_callback_strict_mode 'true'`, `dependency 'whip_core'`, `whip_requires '1.0'`.
 - The text field is **whip_core's composer** (the player capsule turns into it, `OpenComposer`); whip_chat's page is only the message log. Players can look around while typing.
 
@@ -749,6 +767,11 @@ Server local event `chatMessage(source, author, text)`: fired before delivery; `
 - Composer submit: a line starting `/` runs `ExecuteCommand(line:sub(2))` on the client; anything unhandled reaches `__cfx_internal:commandFallback` on the server, which is echoed as chat (same 3-burst / 400 ms limit, cleaned, cut to 256).
 - Line cleaning (`cleanLine`): control chars stripped, cut to 256 bytes without splitting UTF-8; whitespace-only → nothing.
 
+## Chat: whip_chat 1.2.0 (for whip_core 1.3)
+
+- **/** opens chat with `/` already typed, so command suggestions show at once (its own rebindable key, `whip_chat_slash`, beside **T**).
+- whip_chat `provide 'chat'`, so resources built for stock chat (`exports.chat:addMessage`, `dependency 'chat'`) work unchanged.
+
 ## Chat: suggestions
 
 - Server-side suggestion sweep is **off** (`local SUGGESTIONS = false` in `server/main.lua`; a code constant, not config). When on it would send `chat:addSuggestions` per player for every command they pass `IsPlayerAceAllowed('command.<name>')` (whip_core commands checked via `exports.whip_core:GetCommandAce`).
@@ -800,6 +823,22 @@ Server local event `chatMessage(source, author, text)`: fired before delivery; `
 ## Gotchas
 
 1. A SecureCallback for a phone app must declare `params = { { 'args', 'any' } }`, or `args` is always `{}`.
+1a. The controller's focus engine (`html/core/focus.js`) only reaches `[data-act]`, inputs and mount-mode buttons
+    whose box is over 4 px each way, and skips `[data-nofocus]`. A zero-size anchor (a map marker drawn by its
+    overflowing child) is never reached: give the button its real size and anchor it with its own transform, and mark
+    markers that are off screen with `data-nofocus` (verified 2026-11-17, MDT map).
+1c. The phone lays its screen out at a fixed size and shows it through `scale(k)` plus a homography onto the 3D
+    device, so a `<canvas>` sized from layout px × `devicePixelRatio` is stretched and blurry in game. Size the
+    bitmap from the on-screen box: `dpr × getBoundingClientRect().width / clientWidth` (capped), and divide pointer
+    deltas by the same factor (verified 2026-11-17: the MDT map was 630 px laid out, 732 px on screen at 1080p).
+1d. whip_phone's page outlives your resource: `ensure` re-loads an external module's script with a new `?t=<time>`
+    (`core/main.js`), but helper files your module adds with a `<script>` and an `if (window.X) return` guard stay the
+    old copy, so new code does not run until the phone itself reloads (seen in game 2026-11-17: `map.toggleTilt is not
+    a function`). Load helpers with the module script's own `?t=` and key the guard by `document.currentScript.src`;
+    dispose the old copy's WebGL when a new one loads.
+1b. A mount-mode app that redraws with `innerHTML` must keep a heavy element (a WebGL map) as one persistent node
+    and move it into each new placeholder with `appendChild` after the redraw; re-creating it every draw rebuilds the
+    WebGL scene.
 2. A built-in module needs both a `Config.Modules` entry and its own `files {}` line in whip_phone's fxmanifest; globs in folder names ship nothing.
 3. `RegisterModule` lives in whip_phone's client memory: re-register on `onResourceStart('whip_phone')`. It must be called from your resource (not the F8 console), the id must start with a letter, and built-in/dev-app ids are refused.
 4. `RegisterModule`'s `ns` is not validated: the page may call any `<ns>:*` callback for every registered ns, so every handler must validate `source`/args itself. Pick a unique `ns` (default: your resource name).

@@ -545,10 +545,12 @@ class Scan:
                     self.add('W023', 'INFO', rel, line_of(text, m.start()), f'SecureEvent {m.group(1)} has no `near`',
                              'Add `near = { at, range, message }` when the action belongs to a place', 'security.md')
             # waits before giving without a session check
+            # a payout to { charId = ... } lands in the character's bank, not in a live session
+            give_live = r':(?:AddItem|PayPlayer|StoreGive|GiveVehicleKey)\(\s*(?!\{\s*charId\b)'
             if re.search(r'\b(?:Wait\(|Progress\(|SkillCheck\(|Callback\()', text) and \
-               re.search(r':(?:AddItem|PayPlayer|StoreGive|GiveVehicleKey|GiveOnLogin)\(', text) and \
+               re.search(give_live, text) and \
                'IsSessionCurrent' not in text and side != 'client':
-                m = re.search(r':(?:AddItem|PayPlayer|StoreGive)\(', text)
+                m = re.search(give_live, text)
                 self.add('W030', 'MEDIUM', rel, line_of(text, m.start()), 'Gives after a wait with no session check',
                          'After any wait (Progress, Wait, DB), check `IsSessionCurrent(source, player.session)` before giving', 'core-concepts.md')
             # RemoveItem then AddItem close together -> StoreMove

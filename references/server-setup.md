@@ -226,6 +226,8 @@ machine. Without separate ports the second one fails with "something already ans
 | `ER_BAD_DB_ERROR` 1049 `Unknown database` | Manual route: nobody created it | `CREATE DATABASE … utf8mb4_unicode_ci` (`install_whip.py --create-db`) |
 | `[whip_core:db] waited 10 s for the database` | Any database error above | Read oxmysql's lines above it; no restart needed after the fix |
 | Setup report: OneSync FIX | Manual route without `set onesync on` | Add it |
+| `No such command <word>:.` at start | A `;` inside a `server.cfg` comment: the console ends the command there and runs the rest | No `;` in cfg comments |
+| `Argument count mismatch (passed 1, wanted 2)` | `set name ""`: an empty value counts as no argument | Comment the line out (unset = empty) |
 | "something already answers on 127.0.0.1:7880" | A second whip_voice on the same machine | Move this server's voice ports |
 | `CERTIFICATE_VERIFY_FAILED` in the installer | Python TLS on Windows (intermittent) | Rerun; the installer falls back to curl |
 | A txAdmin download times out | A GitHub zip built too slowly (150 s limit) | Retry the deploy; the big resources are already release zips |

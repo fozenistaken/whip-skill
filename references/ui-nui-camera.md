@@ -51,6 +51,8 @@ Covers WHIP's player-facing UI exports (toasts, bars, dialogs, skill checks, hin
 ### Notify(text, type?, duration?) — CLIENT
 - `text` string; `type` `'success'|'error'|'info'|'warning'` (default `'info'`); `duration` ms (default `3000`). Doesn't block; several queue.
 - Surface is decided on arrival: the player capsule (bottom left) when free and on screen, else the top-right stack (a UI open, player dead). Bursts queue through the capsule one at a time.
+- A screen that shows notices itself takes them first: the /whip panel's header, the pockets' header (`js/inv-notice.js`), a shop's talk row (`js/shop-talk.js`). The top-right stack (`#ui-notifications`, `renderToStack` in `html/js/ui.js`, styles `css/ui.css` §1) is only the last fallback: max 5, newest at the bottom, sits under objective cards (`--obj-n`). During a load notices wait; a queued one older than 8 s is dropped. Repeats are not merged.
+- Top middle is not free: `UI.ShowText` at the top puts its capsule there (`.ui-drawtext-top .dt-cap`, top 36px at the 2560x1440 design). A top-middle notice must sit under it.
 - No return value.
 ```lua
 exports.whip_core:Notify('Inventory full', 'error', 5000)
@@ -795,6 +797,27 @@ Whip.register(function() exports.whip_core:SetActiveTheme('my_skin') end)
 
 ---
 
+## Pictures of WHIP's real screens without the game (PR before/after)
+
+Verified 2026-11-17 for WHIPFX/whip_core #62, #76, #81, #85, with local helper scripts (not in this repo):
+- **Two versions side by side:** `git worktree add` each branch and the commit it grew from (`git merge-base origin/main <branch>`), not today's main, so only your change differs.
+- **Serve them with `server.cjs`, not `python -m http.server`.** whip_core's page loads 100+ modules at once. Python's server refused some, and then the page never started, flakily. `server.cjs` also serves `/res/<resource>/...` from the sandbox's resources, so media packs load.
+- **`shot.js` plays the game:**
+  - It answers `https://whip_core/<callback>` with `{}` (or `__answers[name]`) and maps `cfx-nui-<pack>` script, image and fetch URLs to `/res/`.
+  - Helpers: `send(msg)`, `openPanel(section)` (resends `openWhipPanel` until `wpSectionEnter` comes back), and `waitFor(sel)` (any visible match).
+  - Feed data with `send({ action: 'wpSectionData', section, kind, payload })`.
+- **`shoot.sh <name> <path> <x0,y0,x1,y1> '<setup js>'`:** renders 1920x1080 headless through ui-scaling's `rescheck.mjs` (`--eval` takes await; `MOUSE=x,y` hovers and `CLICK=x,y` presses with a real mouse) and crops with PIL. `probe.sh` prints what the setup passes to `probe(...)`, to find boxes first.
+- **Messages that open screens:**
+  - /whip panel: `openWhipPanel {section}`.
+  - Pause menu: `pauseOpen`, then `pauseData {player, waypoint, blips, route}`; click the `[data-i]` row "Map".
+  - `/w`: `devMenuShow {tools, index, title, view}`, rows as `BuildDevMenuPayload` in `tools/core.lua` makes them.
+  - Player Manager: `kind: 'all' {users}`, click `[data-action=pmgSelect]`, then `kind: 'detail' {userId, online, source, ...}`. Its Actions group starts collapsed; click its header.
+- **Limits:**
+  - Headless Edge has no WebGL, so the 3D pause map stays black. Draw blip marks with the page's own `blipImage()`, inside an element that sets `--pmap-blip` (22px, as the map does).
+  - A native `<select>` popup and CSS `:hover` without `MOUSE` never show in a page picture.
+  - Pages whose data comes from the server's schema (Settings → Config) need that data faked; describe those in text.
+- **Hosting the pictures:** an image-only `pr-assets` branch on the fork (`git init` in a temp folder, push to `pr-assets`), linked as `https://raw.githubusercontent.com/<fork>/whip_core/pr-assets/<file>.png`. Commit with the GitHub noreply address.
+
 ## Building your own NUI page that fits WHIP
 
 Resource side:
@@ -803,6 +826,11 @@ Resource side:
 3. Before opening, check `IsGameInputFree()` / `IsAnyScreenOpen()`; after any WHIP dialog over your screen returns, `SetNuiFocus(true, true)` again.
 4. Use WHIP dialogs (Confirm/Input) rather than in-page ones when they fit; they answer `'busy'` only over OTHER resources' screens.
 5. Hide overlays via `whip_core:ui:stateChanged` / `whip_core:ui:cleanScreen`.
+
+Pictures WHIP already ships (use them before making art; verified 2026-11-17):
+- **Items:** the client `GetItemDef(key)` gives `name` (the label, not `label`), `weight` and `img` (an absolute URL when the owning resource ships one). With no `img`, the picture is `https://cfx-nui-whip_core/html/img/items/<key>.png`. Some gunny items (`gunny_smokegrenade`) have no picture at all: ship your own and fall back to it on the image's `error`.
+- **Vehicles:** `https://cfx-nui-whip_media_previews/img/vehicles/<model lowercased>.webp` (all GTA police cars are there).
+- **Clothing:** `https://cfx-nui-whip_media_clothing_<male|female>/img/clothing/<body>/<slot folder>/<body>_<comp>_<collection>_<NNN>_<TT>.webp`, for example `11_tops/male_11_base_000_00.webp`. The collection and NNN are not the global drawable: on the client, `GetPedCollectionNameFromDrawable(ped, comp, d)` and `GetPedCollectionLocalIndexFromDrawable(ped, comp, d)`, with `''` or `GetPedCollectionName(ped, 0)` written `base` (`whip_core/client/appearance.lua:663-704`).
 
 Page side (all files are served cross-resource from `https://cfx-nui-whip_core/...`):
 - Fonts: `<link rel="stylesheet" href="https://cfx-nui-whip_core/html/css/fonts.css">` (Barlow 400–800, Bricolage Grotesque 200–800; vendored woff2, `font-display: block`). whip_dealership `@import`s it from CSS.
@@ -813,6 +841,23 @@ Page side (all files are served cross-resource from `https://cfx-nui-whip_core/.
 - Item pictures/vehicle images are under `html/img/items/*.webp|png`, `html/img/vehicles/*.png` (served).
 - CSS age: WHIP's own CSS stays 2022-safe (Chromium 103: no `:has()`, nesting, `color-mix()`, container queries, `@layer` by default). Use newer features only behind `caps-*` classes or `@supports` for features 103 lacks entirely.
 - Theme: your page does not receive the active skin automatically; base.css gives you the stock tokens.
+
+### WHIP's 3D map inside your own page (verified 2026-11-17 in whip_phone)
+
+- Data: `<script src="https://cfx-nui-whip_media_map/map/whip-map3d.js">` sets `window.WHIP_MAP3D` (about 2 MB). Renderer:
+  `import('https://cfx-nui-whip_core/html/js/map3d/map3d.js')` exports `WhipMap3D` and `K0`. The page needs an import
+  map for the bare `three` (r170 in both whip_core and whip_phone). The cross-resource module import works in game:
+  FiveM serves every NUI file with `access-control-allow-origin: *` (`NUISchemeHandler.cpp`). A local test server
+  must send that header too, or the import fails while the game works.
+- Build once per page: `new WhipMap3D(document.createElement('canvas'), { data: window.WHIP_MAP3D, antialias: 2 })`,
+  `await map.ready`, then `window.WHIP_MAP3D = null`. Per draw: `resize(W, H, dpr)` when the size changed,
+  `setView({ x, y, pxPerMetre: K0 * 2 ** zoom, offsetX: 0, offsetY: 0, yaw: 0, pitch: 90 })`, `render()`, then copy
+  `gl.canvas` into your own 2D canvas with `drawImage` (as `pause-map.js` does). The copy is what whip_phone's fold
+  snapshot can see. When the map is hidden, `resize(1, 1, 1)` frees its buffers.
+- Flat and north-up, world to screen is `sx = W/2 + (x - cx) * k`, `sy = H/2 - (y - cy) * k` with `k = K0 * 2 ** zoom`.
+  Markers can be DOM over the canvas, placed with that line; no `project()` call is needed. WHIP's own zoom range is
+  1.4 to 7.5.
+- Don't import `pause-map.js` into another page: it pulls `pad-cursor.js`, `utils.js` and the router with side effects.
 
 ---
 

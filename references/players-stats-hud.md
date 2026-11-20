@@ -152,6 +152,9 @@ Client-side-only props (never networked, frozen, not pickable) created by each g
 ### RequestScreenshot(source, opts?) — SERVER, WAITS
 Picture from the player's own game (up to 30 s). `opts`: `format` ('jpg'|'png'|'webp'), `quality`, `width`, `height`, `ui`, `frames`, `every`. Returns data URL string, or `false, why`. For tools, not anti-cheat (a game can send a fake).
 
+### GetCharacterInfo(charIds) — SERVER, WAITS (1.3.0)
+Up to 200 characters, online or not: `{ [charId] = { charId, firstName, lastName, fullName, dateOfBirth, gender, online } }` (`dateOfBirth` `'YYYY-MM-DD'`, `gender` `'male'`/`'female'`), unknown and deleted ids left out; `false, reason` when the database fails. Online ones come from the live sheet, the rest from one query. For ID cards, licences, records screens. Check `CanSeePlayerName` before showing a stranger's.
+
 ## Metadata
 
 ### GetPlayerMetadata(who, key?) — SERVER, WAITS
@@ -351,6 +354,9 @@ Disconnect: same release and save with `why = 'disconnect'`; `onRemove` reason `
 | Stashes locked to them | Contents stay; owner and lock cleared |
 | Cars and bank accounts | Unchanged; an admin can reassign |
 Core hooks run before the public `whip_core:character:deleted`. `Character.reconcileDeleted` re-runs the release hooks at every start for deleted characters still holding jobs/homes/keys/stashes.
+
+### RegisterSpawnPoint(id, def) · RemoveSpawnPoint(id) — SERVER (1.3.0)
+A place in the spawn picker beside `Config.SpawnPoints` (a gang's hideout, a job's depot). `def = { pos = vector4 (a vector3 faces north), label? (40 chars, else the id), canUse? = function(charId) return bool end }`; `canUse` is checked for the list and again when picked, and an error in it hides the place. The same id replaces it; it goes when your resource stops. At most 30 at once; an id is letters, digits, `-` and `_`, at most 24 (92 with your resource's name). Picked, it is read again live. Returns `true` or `false, why`.
 
 ## Lifecycle events
 
@@ -629,6 +635,11 @@ Revive where they lie (as `/w` Restore): server record first, then the client st
 | `whip_core:death:screenChanged` | C | one of `{ state = 'count', left, total }` · `{ state = 'ready', progress (0-100), key }` · `{ state = 'held', label }` · `{ state = 'off' }` · `{ hidden }` |
 
 Console/Stats log death line: `[whip_core] John [3] has died — reported: Carbine Rifle by Jane (#5) (charId: 12)`. Hunger/thirst deaths read `Starvation`/`Dehydration`; health a script/effect took reads as its reason. **Never pay out on these events alone**: any server resource can fire `whip_core:player:died` / `:revived`.
+
+### Fixed in 1.3.0 (for code that worked around them)
+- A player who logged out dead lies on the ground when they join again, not half in it.
+- Giving an item to a downed player keeps them down (the receiver's give clip no longer clears the death pose).
+- A logout closes the inventory, give mode, placing mode and the chat composer.
 
 ## Escort
 

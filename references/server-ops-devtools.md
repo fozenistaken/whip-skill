@@ -100,6 +100,7 @@ add_ace resource.whip_core command.remove_principal allow
 ## Update checks (GetUpdate, GetUpdates)
 
 - A resource takes part with `whip_updates 'owner/repo'` next to `version` in its fxmanifest (a full `https://github.com/owner/repo(.git)` URL is accepted and trimmed). The latest release's tag is compared with `version` (leading `v` ignored; numeric parts compared, `1.0` = `1.0.0`).
+- It reads GitHub **releases**, not tags: a repo with tags but no published release answers 404 and shows "no public release (the repository is private, misspelt, or has none)". Every number counts, so `4.2.6.1` is newer than `4.2.6` (a fork can version above its upstream that way).
 - Schedule (`server/updates.lua`): first round 30 s after `whip_core:onReady` with reason `coreStarted`, then hourly; each repository is asked at most once every 12 h (answer kept in server KVP `whip_core:update:<repo>` across restarts). Requests one at a time, 1.5 s apart, with ETag (`If-None-Match`); User-Agent `whip_core-update-check`. Hitting GitHub's 60/h unauthenticated limit pauses all checks until reset.
 - Sent: one request per repo to `api.github.com/repos/<repo>/releases/latest`; GitHub sees server IP and repo names only.
 - A newer release shows in the console, the setup report (`note Update available: ...`), `whipupdates`, and as a toast to an admin turning developer mode on (once per session).
@@ -218,6 +219,13 @@ Developer-mode client commands (`DevCommand`, `client/dev_commands.lua`; refused
 Other dev tools (open commands; the server re-checks): `/vehpoints` (prompt points on the bike/boat/aircraft you look at), `/radardebug` (minimap tuner), `/radar [part|print]` (radar rects), `/propcheck` (`restart`) (spawn every catalog prop, list failures; run again to stop, resumes next time), `/propprobe` (interior natives at your spot), `/npcdebug` (NPC state over heads), `/prop add <category>` / `/prop remove` (furnisher catalog; server SecureEvents with `ace = 'whip.devtools'`), `/whip_theme [resource|none]` (re-apply theme; server-gated), `/w`, `/whip`, `/director`, `/systems`.
 
 Player commands: `/logout` (to character select, skips the landing screen), `/e <emote>`, `/walk <name>`, `/mood <name>`, `/emotes`, `/me <text>`, `/seats`, `/vehiclehud [on|off]` (hides the dial for that player until reconnect), `/furnish`, `/inventory`; key-binding commands include `+whip_interact`, `+whip_togglelock`, `+whip_ignition_on/off/toggle`, `+tabhotbar`, `whip_radial`, `whip_emote_cancel`, `whip_cyclevoice`, `whip_coords_copy`, `escort_grab`, `escort_release`. Key binding "Whip: Open Admin Panel" is unbound by default (Settings → Key Bindings → FiveM).
+
+### Staff commands added in 1.3.0
+- `/tp <x y [z] [heading]>` or `/tp <server id>`, `/tpto <server id>`: to a place or a player, behind a fade, waiting for the ground; a car you drive comes along. Refused for a player in another routing bucket. The Player Manager's Teleport To goes the same way. Each is on the admin's activity log.
+- `/tpm`: to your map waypoint, onto the ground there; also Teleport to Waypoint in /w.
+- `/vector2`, `/vector3`, `/vector4`, `/heading` (and `/vec`): copy where you stand.
+- whip_core's admin commands are sent to staff (holders of `whip.devtools`) as chat suggestions when their character loads. A dev command refused because developer mode is off says so.
+- Pending, not in 1.3.0: `/whip_heal <charId>`, `/whip_kill <charId>` and Revive / Heal / Kill in the Player Manager (whip_core PR #76).
 
 ## /w quick menu
 

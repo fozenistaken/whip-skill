@@ -162,6 +162,8 @@ Returns `{ id, type, pos, size, radius, heading, points, minZ, maxZ, group, labe
 NOTE the signature differs from the client's: id first. Registers a server-side zone for checks; no tick unless `data.trackPlayers`. `data`: `type, pos, size, heading, radius, points, minZ, maxZ, group (≤ 60), label (≤ 80), trackPlayers, tag`. No `rules`, `notify`, `priority` or callbacks on server zones. Shape validated: sphere needs `pos` + `radius` (0 < r ≤ 2000), box `pos` + `size` (each 0 < s ≤ 4000), poly 3–256 `points`; pos within ±16000 (z ±5000); `maxZ` ≥ `minZ`. Same owner registering again re-applies the geometry; another resource's id is refused. Removed when your resource stops or `ReleaseTag(tag)` (released last in a run).
 Returns `true`, or `false, reason` (`"the server's RegisterZone takes (id, data): an id of your own first, then the zone"`, `'RegisterZone: data must be a table'`, `'RegisterZone "x": radius is a number of metres, above 0 and at most 2000'`, ...).
 
+With `trackPlayers = true` it fires `whip_core:zone:entered` / `:exited` with `zoneId` = the id you passed (verified in `server/zones.lua:1152`, 2026-11-18), checked about once a second: a speed camera needs a radius a car can't cross between two checks (25 m covers 90 km/h; wider for motorways). Read the car's speed on the server with `#GetEntityVelocity(veh)` (m/s).
+
 ### RemoveZone(id) — SERVER
 Removes one of YOUR server zones (a client zone of the same id is separate and stays). Returns `true` or `false, reason`.
 
@@ -445,7 +447,7 @@ end)
 
 ## Blips and waypoints: ShowBlip / HideBlip / SetPlayerWaypoint — SERVER
 
-Server-driven map markers; the client makes a GTA blip when told (no frame loop). Ids are your resource's own; the same id again moves/changes the blip. Gone when your resource stops or your run tag is released. Re-sent to a character on login (a charId audience follows them across relogs); cleared on logout. Not documented in the doc sections; source `server/blips.lua`, stubs `types/server.lua:147`.
+Server-driven map markers; the client makes a GTA blip when told (no frame loop). Ids are your resource's own; the same id again moves/changes the blip. Gone when your resource stops or your run tag is released. Re-sent to a character on login (a charId audience follows them across relogs); cleared on logout. Source `server/blips.lua`; docs.html export card `showblip`.
 
 ### ShowBlip(audience, id, spec) — SERVER
 
@@ -453,13 +455,14 @@ Server-driven map markers; the client makes a GTA blip when told (no frame loop)
 |---|---|---|
 | `coords` | vector3 \| `{ x, y, z }` | Required |
 | `label` | string? | Map legend name, ≤ 40 chars (cleaned, `~` removed) |
-| `sprite` | integer? | GTA blip icon 0–1000. Default 1 (dot); default 0 (no dot) for a bare area (`radius` with no `label` and no `route`) |
+| `sprite` | integer? | GTA blip icon 0–1000. Default 1 (dot); default 0 (no dot) for a bare area (`radius` with no `label` and no `route`). Look ids up with `gh search code "radar_<name>" --repo citizenfx/fivem-docs` (357 = `radar_garage`, 60 = `radar_police_station`); a WebFetch summary of the blips page got 357 wrong |
 | `color` | integer? | GTA blip colour 0–85, default 5 (yellow, objective) |
 | `route` | boolean? | GPS route drawn (route colour = `color`); needs the dot |
 | `radius` | number? | 1–5000 m: an AREA (translucent circle, alpha 90) |
 | `shortRange` | boolean? | Only on the radar when near; default false (always) |
 | `scale` | number? | Clamped 0.3–2 (default 0.9) |
 | `flash` | boolean? | Flashes |
+| `number` | integer? | 0–99 on the dot: a route's stops in order (1, 2, 3), on GTA's map and WHIP's pause map and minimap (1.3.0) |
 | `tag` | string? | Run tag |
 
 `audience`: `'everyone'`, `{ people = { serverId | { charId = n } } }` or `{ job = 'police', onDuty = true }` (followed as people clock on/off, are hired/fired).
@@ -476,6 +479,12 @@ Takes one of your blips down. Returns `true` or `false, reason`.
 
 ### SetPlayerWaypoint(source, coords) — SERVER
 GTA's own waypoint on one player's map. Returns `true` or `false, reason` (`'no such player'`, bad coords). WHIP also shares a waypoint between everyone in the same vehicle (set or cleared by any occupant).
+
+### SetBlipLabel(handle, label) — CLIENT (1.3.0)
+For a blip your resource made with GTA's natives (`AddBlipForCoord`): tells WHIP's pause map its name, since WHIP can't read a blip's custom name back (without it the legend shows the sprite's name). `label` nil removes your registration. Only the registering resource can change or remove it; it clears when that resource stops. Returns `true, handle` (set), `true` (removed) or `false, why`. `ShowBlip` blips don't need it.
+
+### The pause map (1.3.0)
+A right-click clears the waypoint (a right-drag still turns the 3D view). The Menu button goes back to the menu. The pause menu plays GTA's frontend sounds.
 
 ## Audiences
 

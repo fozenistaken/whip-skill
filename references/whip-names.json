@@ -358,6 +358,9 @@
   "GetCharacterBankAccounts": [
    "server"
   ],
+  "GetCharacterInfo": [
+   "server"
+  ],
   "GetCharacterNames": [
    "server"
   ],
@@ -508,6 +511,9 @@
   ],
   "GetNearbyVehicles": [
    "client"
+  ],
+  "GetNearestAtm": [
+   "server"
   ],
   "GetNearestGarage": [
    "server"
@@ -956,6 +962,9 @@
   "IsKeyPressed": [
    "client"
   ],
+  "IsNearAtm": [
+   "server"
+  ],
   "IsPlaceableProp": [
    "server"
   ],
@@ -1195,6 +1204,9 @@
   "RegisterSentinelKey": [
    "server"
   ],
+  "RegisterSpawnPoint": [
+   "server"
+  ],
   "RegisterStat": [
    "server"
   ],
@@ -1278,6 +1290,9 @@
   "RemovePropertyKey": [
    "server"
   ],
+  "RemoveSpawnPoint": [
+   "server"
+  ],
   "RemoveVehicleKey": [
    "server"
   ],
@@ -1344,6 +1359,9 @@
   ],
   "SetBlackout": [
    "server"
+  ],
+  "SetBlipLabel": [
+   "client"
   ],
   "SetDeveloperMode": [
    "server"
@@ -1586,6 +1604,9 @@
   "TestDirectorScenario": [
    "server"
   ],
+  "ThrowGroundItem": [
+   "server"
+  ],
   "TrackInvocationLock": [
    "server"
   ],
@@ -1742,6 +1763,7 @@
   "whip_core:client:containerUpdated",
   "whip_core:client:containersSync",
   "whip_core:client:conversation",
+  "whip_core:client:copyCoords",
   "whip_core:client:coreReady",
   "whip_core:client:creatorFinished",
   "whip_core:client:dbHealth",
@@ -1818,6 +1840,7 @@
   "whip_core:client:inventoryRevert",
   "whip_core:client:inventoryUpdate",
   "whip_core:client:itemDefsStale",
+  "whip_core:client:itemNotice",
   "whip_core:client:itemSettings",
   "whip_core:client:jmAllJobs",
   "whip_core:client:jmRefresh",
@@ -1939,8 +1962,12 @@
   "whip_core:client:takeSaved",
   "whip_core:client:takeShow",
   "whip_core:client:throwAccepted",
+  "whip_core:client:throwFor",
   "whip_core:client:throwRefused",
+  "whip_core:client:throwTestCleared",
+  "whip_core:client:throwTestResult",
   "whip_core:client:timeSync",
+  "whip_core:client:tpWaypoint",
   "whip_core:client:twAllData",
   "whip_core:client:twRefresh",
   "whip_core:client:uitAccessGranted",
@@ -2309,10 +2336,14 @@
   "whip_core:server:takeSave",
   "whip_core:server:takeShowsWant",
   "whip_core:server:takeWant",
+  "whip_core:server:throwForFailed",
+  "whip_core:server:throwForLaunched",
   "whip_core:server:throwItemLanded",
   "whip_core:server:throwLaunched",
   "whip_core:server:throwSettled",
   "whip_core:server:throwStarted",
+  "whip_core:server:throwTest",
+  "whip_core:server:throwTestClear",
   "whip_core:server:toggleVehicleDoor",
   "whip_core:server:toggleVehicleLock",
   "whip_core:server:triggerCallback",
@@ -2464,6 +2495,7 @@
      "faces",
      "follow",
      "heading",
+     "list",
      "model",
      "netId",
      "offset",
@@ -2512,6 +2544,7 @@
      "id",
      "label",
      "options",
+     "reach",
      "require"
     ],
     "at": [
@@ -2605,6 +2638,7 @@
     "stack",
     "type",
     "usable",
+    "wallet",
     "weight"
    ],
    "source": "types/classes.lua WhipItemDef"

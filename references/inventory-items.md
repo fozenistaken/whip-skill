@@ -124,6 +124,9 @@ Fields of `RegisterItem(key, def)` and `Config.Items[key]` (`WhipItemDef`, types
 - `css` is also passed to the NUI payload (inventory.lua:1556), undocumented.
 - Internal fields written onto the stored def: `_declared`, `_declaredImages`, `_fromServer` (client). Don't rely on them.
 
+### Items in the wallet: wallet = true (1.3.0)
+An item whose definition sets `wallet = true` (`RegisterItem('mybank_card', { ..., wallet = true })`) can go in the wallet, and counts as carried there: `HasItem`, `GetItemCount`, `FindItem`, `RemoveItem` (after the pockets), item requirements on prompts, points and doors, and the item events all look inside it. The wallet is a panel item registered with `allowedFlag = 'wallet'`. Cash in a wallet is put away, not counted.
+
 ## Item icons and pictures
 
 Icon resolution (`Inventory.resolveItemImage`, inventory.lua:1431):
@@ -485,6 +488,15 @@ Ends the viewer's inspection: unlocks/saves the target, saves the viewer. Return
 
 ### IsCharacterBeingInspected(charId) — SERVER
 Whether someone else has this character's pockets open (not whether they have their own inventory open). Returns boolean.
+
+### ThrowGroundItem({ item, amount?, from, target, power?, by?, metadata?, reason? }) — SERVER (1.3.0)
+Throws an item from one point at another as a player's throw does: a ground item from the moment it leaves `from` (anyone in reach can grab it in the air), on the arc that lands on `target` at that `power` (none: the gentlest that reaches). A player's game flies it: `by` when within 50 m of `from`, else the nearest player who is. It knocks over whoever it hits hard enough for its weight (`Config.ThrowKnockdown`; cash never does). Read its docs.html card for the returns before using it.
+
+### Item notices (1.3.0)
+`Config.ItemNotices = { enabled = true, removed = true, position = 'right' }`: a box with the item's picture, name and amount whenever a player gains (green) or loses (red) an item, any way (from `whip_core:item:added` / `:removed`). `removed = false` shows gains only; `position` `'right'`, `'left'` or `'bottom'`. A repeat adds to the box still up; at most 5 at once. Don't add your own "you received" toast on top.
+
+### Fixed in 1.3.0
+- A timed use that errors no longer locks that player out of every timed item until a restart.
 
 ## Client exports
 

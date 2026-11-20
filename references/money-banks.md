@@ -268,11 +268,12 @@ With `Config.BlockOwnCharacterTransfers = true` (default), money cannot pass bet
 
 ## ATMs
 
-- No location list: `client/atm.lua` finds `Config.AtmProps` models near the player (any MLO bank works). The prompt is the whole interface: root "Check Balance" → account list (server asked on E) → Deposit / Withdraw (type amount into the badge, E submits) and Back. Looking away collapses to root.
+- WHIP's own ATMs need no location list: `client/atm.lua` finds `Config.AtmProps` models near the player (any MLO bank works). `AtmProps`, `AtmVisibleRange` and `AtmActiveRange` are also on /whip → Settings → Characters, money & jobs, live; an empty model list turns WHIP's ATMs off, for a server using another ATM resource (1.3.0).
+- **Server-side ATM positions (1.3.0):** `IsNearAtm(source, range?)` → `true, at` (the machine's base) or `false, why`; range 0.5–10 m, default `AtmActiveRange` + 1, measured across the ground. `GetNearestAtm(coords)` → `at, distance` or `nil`, within 3 m of height. The list is GTA's own machines plus `Config.AtmExtraPositions`. For a resource that wants a standing-at-a-machine check (a robbery, a skimmer); WHIP's own ATM callbacks don't use it. The prompt is the whole interface: root "Check Balance" → account list (server asked on E) → Deposit / Withdraw (type amount into the badge, E submits) and Back. Looking away collapses to root.
 - Server callbacks (`server/atm.lua`, not an API): `whip_core:atm:accounts` (rate 500 ms) returns `{ accountId, label, accountNumber, balance, frozen, canDeposit, canWithdraw }` rows plus cash on hand; `whip_core:atm:deposit` / `whip_core:atm:withdraw` (rate 1000 ms, amount `'amount'` param 1..999,999,999).
 - Deposit: takes the notes first (`Money.charge` cash, reason `'ATM deposit'`), then `Bank.Deposit` (deposit permission); a refused deposit refunds the notes (dropped at the feet if pockets filled).
 - Withdraw: capacity check first (`'No room — you can carry $N more'`), then `Bank.Withdraw` (withdraw permission) with the notes added and pockets frozen right before the debit commits, in one transaction; a failed commit takes them back. Messages `'ATM withdrawal'`.
-- No server proximity check exists (machines are client-found); money cannot be created through it because all checks run server-side.
+- WHIP's ATM callbacks have no `near` clause (machines are client-found); money cannot be created through them because all checks run server-side. Your own ATM resource can add one with `IsNearAtm`.
 
 ## Events
 

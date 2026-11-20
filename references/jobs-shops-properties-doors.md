@@ -14,6 +14,7 @@ Jobs (roles, duty, business account), shops (npc / infinite / stocked), properti
 - Shops: server exports
 - Shops: client exports
 - Shops: opening from your own resource, virtual shops (whip_core 1.2.0+)
+- Shops: GTA's own 24/7s and LTDs (1.3.0)
 - Shops: the shopping flow (server internals)
 - Shops: stock management and shelf layout
 - Shops: events and shop talk
@@ -355,6 +356,10 @@ porting-playbooks.md, EnsureShop trap). For a new virtual shop: `EnsureShop` wit
 `shop.settings.virtual` is unset, `UpdateShop(shop.shopId, { settings = s })` where `s` is a COPY of `shop.settings`
 with `virtual = true` added. UpdateShop replaces the whole settings table (`server/shops.lua:1332`), so passing only
 `{ virtual = true }` drops `settings.ensured` and the shelf layout.
+
+## Shops: GTA's own 24/7s and LTDs (1.3.0)
+
+`Config.GtaStores` (off by default; on with `set whip_gta_stores true` in server.cfg, which WHIP's txAdmin recipe sets for a new server, or on /whip → Settings → World & gameplay) makes GTA's nine 24/7s and five LTDs as shops: a keeper behind the till, a map icon, `Config.GtaStoreCatalog` (default `{ food = 50, drink = 30 }`). Each is made once, then managed in /whip like any shop. Turning it off makes no more and deletes none; one deleted in /whip is not made again. Leave it off when another resource runs your stores.
 
 ## Shops: the shopping flow (server internals)
 

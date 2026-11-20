@@ -135,6 +135,8 @@ Every key given must pass. Checked first (cheap), before `canInteract`. The clie
 | `charId` | `12` or a list | One of these characters | `character` |
 | `ace` | `'whip.devtools'` | Holds this ACE. Asked of the server once (`whip_core:checkAcePermission`) and cached; the first ask answers "no" until the reply; failed asks retry after 2 s (`client/actions.lua:144`) | `permission` |
 
+`onDuty = false` is NOT "must be off duty": it means no requirement (`server/requirements.lua:96-97`). To show "Clock in" only to someone off duty and "Clock out" only to someone on, use a client `AddAction` option with `canInteract`, or a server Talk point whose `onUse` builds the conversation's answers per person.
+
 Type rules (`shared/interact_spec.lua:509`): `alive` boolean; `vehicle` `'in'|'out'`; `onDuty` boolean; `jobPermission` string; `item` entries a key or `{ item = 'key', count = n }`; `held` key or list of keys.
 
 - `vehiclePart` actions refuse `alive = false` and `vehicle = 'in'` (always used on foot, alive).
@@ -220,6 +222,12 @@ From a world prompt's `onSelect`: `ctx.beginInput(opts)`. The prompt steps aside
 | `onChange` | fn(text)? | Every change |
 
 `ctx.typed` (string with caret, or `false`) lets your `label` function show progress; `ctx.inputText()` returns the current text or `nil`; `ctx.cancelInput()` ends it.
+
+### Adding to another prompt's list: at = { list } (1.3.0)
+`at = { list = '<prompt group>:<option id>' }` adds your action right after that option, on every prompt of that group (a submenu without the option gets none). `'atm:balance'` scrolls it in under the ATM's Check Balance. `ctx.entity` / `ctx.model` are the prop that prompt is on; `require` and `canInteract` still decide when it shows. It survives the owner rebuilding its menu.
+
+### canInteract is cached (1.3.0)
+A prompt asks `canInteract` about twice a second while nothing changes (was ten times), so a prompt can take up to 500 ms to appear or go. It is always asked again when pressed, so a stale answer never runs `onSelect`. Keep `canInteract` cheap anyway.
 
 ## Styles (style field, SetActionStyle, Config.Interact3D)
 
@@ -444,6 +452,9 @@ Returns: `true` or `false, reason` (`'no such point of yours'`).
 ### GetPoints(filter?) — SERVER
 `filter = { tag? }`. Your points (sorted by id) as `{ pointId, owner, tag, label, icon, coords = {x,y,z}|nil, heading, netId, vehicleId, groundId, containerId, enabled, options = { { id, label, icon, options } } }` (no `onUse`).
 
+### A point option's own reach (1.3.0)
+An option in `AddPoint`'s list can set its own `reach`. One further than the point's widens the prompt to it, and the point is seen from at least that far; a nearer one is held to its own reach, on the player's game and again on the server.
+
 ## Audiences
 
 One shape for "these players" (`server/audience.lua`), used by points, blips, NPC hostility:
@@ -499,6 +510,9 @@ end
 
 ### GetConversation(convId) — SERVER
 Copy: `{ convId, owner, tag, source, npcId, netId, speaker, line, options = { { id, label, ends } }, waiting }` or `nil`.
+
+### Answering a conversation with number keys (1.3.0)
+The 1, 2, 3, 4 keys pick the answer shown beside that number while a conversation is up (they act as the hotbar otherwise). Nothing to set up.
 
 ## Item right-click options (contextOptions, AddItemOption, RemoveItemOption)
 
